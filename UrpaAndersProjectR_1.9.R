@@ -3,26 +3,18 @@
 library(datasets)
 library(distnetR)
 
-# Load dummy data set, generate dissimilarity matrix
+# Load real data, generate dissimilarity matrix
 
-data("iris")
-tab <- (iris[seq.int(1, nrow(iris), 6), 
-            c("Petal.Length","Petal.Width","Species")])
+load("/Users/admin/Documents/Rotation1_AndersLab/Expr.entID.expressed.rda")
 
-row.names(tab) <- paste("P",row.names(tab))
-
-species_ID <- data.frame(species = tab[,"Species"], 
-                         ID = rownames(tab))
-
-tab <- tab[, !names(tab) %in% c("Species")]
+tab <- Expr.entID
+row.names(tab) <- Expr.entID$Sample
+tab <- tab[, !names(tab) %in% c("Sample")]
+#tab <- tab[,c(1:100)]
 
 dis <- as.matrix(dist(tab))
 
-# The goal here is to create a function that takes inputs m 
-# (dissimilarity matrix) and focus (the point clicked on by 
-# the user), where the output is a data table (r, phi) to plot.
-
-focus <- 13    # The point clicked on by the user
+# Focused MDS function, where the input is the matrix and the point clicked by the user
 
 focused_mds <- function(m, focus) {
   
@@ -68,10 +60,10 @@ focused_mds <- function(m, focus) {
     minvalue <- stress_res$minimum
     plotdata[new_point,"phi"] <- minvalue
     
-    phigrid <- seq(0, 2*pi, length.out = 100)
-    plot(phigrid,stress(phigrid))
-    abline(v = minvalue)
-    title(main= paste(new_point, "stress graph"))
+    #phigrid <- seq(0, 2*pi, length.out = 100)
+    #plot(phigrid,stress(phigrid))
+    #abline(v = minvalue)
+    #title(main= paste(new_point, "stress graph"))
     
     k = k + 1
     new_point <- obj_by_dist[k]
@@ -79,22 +71,28 @@ focused_mds <- function(m, focus) {
   result <<- plotdata
 }
 
+# Set focus to 1, then run MDS focused on the first point
+focus <- 1
 
-# Final plot of all values (can be integrated into function once we have final
-# plotting parameters)
+focused_mds(dis,focus)
 
-species_ID <- (species_ID[match(row.names(result), species_ID$ID),])
+# Initial plot of the data, ordered by the first data point
+# User click will determine reordering of the plot
 
-plot((result$r*cos(result$phi)), (result$r*sin(result$phi)), 
-     cex=2.5, asp=1, col= species_ID$species )
-grid()
-text((result$r*cos(result$phi)), (result$r*sin(result$phi)), 
-     seq_along(rownames(result)) )
+while (TRUE) {
+  
+  plot((result$r*cos(result$phi)), (result$r*sin(result$phi)),
+       #xlim =c(), ylim= c(),
+       cex=1, asp=1 )
+  grid()
+  
+  focus <- identify((result$r*cos(result$phi)), (result$r*sin(result$phi)),
+                    labels = row.names(result))
+  
+  focused_mds(dis,focus)
+}
 
-# Check the equation for the third point by comparing it to the output of the 
-# stressf function.
-#thirdphicheck <- acos(((dis[2,3]^2 - 2*dis[1,3]^2)/(-2*dis[1,3]))/plotdata[3,2])
 
-distnet( dis+.1, data.frame( 
-  x = result$r*cos(result$phi),
-  y = result$r*sin(result$phi) ) )
+#distnet( dis+.1, data.frame( 
+#  x = result$r*cos(result$phi),
+#  y = result$r*sin(result$phi) ) )
