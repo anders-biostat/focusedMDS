@@ -1,16 +1,48 @@
 # Solutions to the mathematical portion of the project in R
 # Lea Urpa, Simon Anders rotation in FIMM-EMBL PhD 
-library(datasets)
 library(distnetR)
 
-# Load real data, generate dissimilarity matrix
+## Interesting data so far:
+##    - AML patient gene expression data, when patients distances are calculated only with top 10 most variable genes
+##        -> two easily identified clusters
+##    - AML voom expression of gene expression in response to drugs
+##        -> interesting outliers
 
-load("/Users/admin/Documents/Rotation1_AndersLab/Expr.entID.expressed.rda")
+## AML data
 
-tab <- Expr.entID
-row.names(tab) <- Expr.entID$Sample
-tab <- tab[, !names(tab) %in% c("Sample")]
-#tab <- tab[,c(1:100)]
+# Gene expression for each patient.
+
+    #load("/Users/admin/Documents/Rotation1_AndersLab/Expr.entID.expressed.rda")  
+    #tab <- Expr.entID
+    #row.names(tab) <- Expr.entID$Sample
+    #tab <- tab[, !names(tab) %in% c("Sample")]
+
+# Limma voom expression? over all patients, for genes in response to drugs
+
+    #tab <- readRDS("/Users/admin/Documents/Rotation1_AndersLab/aml.voom.f.rds") 
+    #tab <- tab[,!names(tab) %in% c("Entrez")]
+    #tab <- t(tab)
+
+## DSS data
+
+# Correlation coefficients for genes and drugs, calculated over all patients
+
+    #load("/Users/admin/Documents/Rotation1_AndersLab/corr.exp.dss.rda")      
+    #tab <- corr.exp.dss[,!names(corr.exp.dss) %in% c("Genetype","Symbol","Entrez","Ensembl")]
+    #tab <- t(tab)
+
+# Correlation coefficients for genes and drugs, calculated over all patients, and averaged over genes in a gene set
+
+    #tab <- readRDS("/Users/admin/Documents/Rotation1_AndersLab/Hs.H.tstat.rds")
+    #tab <- tab[[1]]
+
+
+# Getting columns with top 10 variance calculations, generate dissimilarity matrix
+
+tab_var <- apply(tab, 2, var)
+top_10 <- names(tail(sort(tab_var),10))
+tab <- tab[, c(top_10)]
+
 
 dis <- as.matrix(dist(tab))
 
@@ -27,9 +59,6 @@ focused_mds <- function(m, focus) {
   plotdata$phi[1] <- 0         # To set focus at origin
   plotdata$phi[2] <- pi/2      # To set 2nd point on y axis
   
-  new_point <- obj_by_dist[3]  # We begin optimizing on the third point
-  
-  
   stress <- function(phi){
     
     # position of the new point, given the candidate phi
@@ -40,7 +69,8 @@ focused_mds <- function(m, focus) {
     j = 1                # the iteration variable
     
     # position of each of the previous points, iterating through the list of previously determined phis
-    while (j < grep(paste("^",new_point,"$",sep=""), obj_by_dist)) {
+    
+    while (j < which(new_point == obj_by_dist)) {   
       
       xj <- plotdata$r[j] * cos(plotdata$phi[j])
       yj <- plotdata$r[j] * sin(plotdata$phi[j])
@@ -52,10 +82,12 @@ focused_mds <- function(m, focus) {
     return(stress)
   }
   
-  k <- grep(paste("^",new_point,"$",sep=""), obj_by_dist)  # the numerical position of new_point in obj_by_dist
+  new_point <- obj_by_dist[3]  # We begin optimizing on the third point
+  
+  k <- which(new_point == obj_by_dist)          # the numerical position of new_point in obj_by_dist
   
   while (k <= length(obj_by_dist)) {            # iterate through the list of points and optimize with stress()
-    stress_res <- optimize(stress, c(0,2*pi)) 
+    stress_res <- optimize(stress, c(0,2*pi))
     #print( stress_res )
     minvalue <- stress_res$minimum
     plotdata[new_point,"phi"] <- minvalue
