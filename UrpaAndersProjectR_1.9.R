@@ -12,10 +12,10 @@ library(distnetR)
 
 # Gene expression for each patient.
 
-    #load("/Users/admin/Documents/Rotation1_AndersLab/Expr.entID.expressed.rda")  
-    #tab <- Expr.entID
-    #row.names(tab) <- Expr.entID$Sample
-    #tab <- tab[, !names(tab) %in% c("Sample")]
+    load("/Users/admin/Documents/Rotation1_AndersLab/Expr.entID.expressed.rda")  
+    tab <- Expr.entID
+    row.names(tab) <- Expr.entID$Sample
+    tab <- tab[, !names(tab) %in% c("Sample")]
 
 # Limma voom expression? over all patients, for genes in response to drugs
 
@@ -54,43 +54,51 @@ focused_mds <- function(m, focus) {
   
   plotdata <- data.frame(r = dis[focus, obj_by_dist],  # order df by dist to focus
                          phi = NA,
+                         xcoord = NA,
+                         ycoord = NA,
                          row.names =obj_by_dist)
   
-  plotdata$phi[1] <- 0         # To set focus at origin
-  plotdata$phi[2] <- pi/2      # To set 2nd point on y axis
+  plotdata <- as.matrix(plotdata)   # handling the plotdata as a matrix is much faster
+  
+  plotdata[1,c("phi","xcoord","ycoord")] <- 0         # To set focus at origin, set phi, x, and y at 0
+  plotdata[2,"phi"] <- pi/2           # To set 2nd point on y axis, designate phi = pi/2
+  plotdata[2,"xcoord"] <- plotdata[2,"r"] * cos(plotdata[2,"phi"]) 
+  plotdata[2,"ycoord"] <- plotdata[2,"r"] * sin(plotdata[2,"phi"])
+  
+  new_point <- obj_by_dist[3]  # We begin optimizing on the third point
   
   stress <- function(phi){
+    
+    stress = 0
+    j = 1                # the iteration variable
     
     # position of the new point, given the candidate phi
     xnew <- plotdata[new_point,"r"] * cos(phi)
     ynew <- plotdata[new_point,"r"] * sin(phi)
     
-    stress = 0
-    j = 1                # the iteration variable
-    
     # position of each of the previous points, iterating through the list of previously determined phis
     
     while (j < which(new_point == obj_by_dist)) {   
       
-      xj <- plotdata$r[j] * cos(plotdata$phi[j])
-      yj <- plotdata$r[j] * sin(plotdata$phi[j])
+      xj <- plotdata[j,"xcoord"]
+      yj <- plotdata[j,"ycoord"]
       
-      Dij = sqrt( (xnew - xj)^2 + (ynew - yj)^2)
+      Dij =  sqrt((xnew - xj)^2 + (ynew - yj)^2)
       stress = stress + (dis[obj_by_dist[j],new_point] - Dij)^2
       j = j + 1
     }
     return(stress)
   }
   
-  new_point <- obj_by_dist[3]  # We begin optimizing on the third point
-  
   k <- which(new_point == obj_by_dist)          # the numerical position of new_point in obj_by_dist
   
   while (k <= length(obj_by_dist)) {            # iterate through the list of points and optimize with stress()
     stress_res <- optimize(stress, c(0,2*pi))
-    #print( stress_res )
     minvalue <- stress_res$minimum
     plotdata[new_point,"phi"] <- minvalue
+    
+    plotdata[new_point, "xcoord"] <- plotdata[new_point,"r"] * cos(plotdata[new_point,"phi"])
+    plotdata[new_point, "ycoord"] <- plotdata[new_point,"r"] * sin(plotdata[new_point,"phi"])
     
     #phigrid <- seq(0, 2*pi, length.out = 100)
     #plot(phigrid,stress(phigrid))
@@ -103,10 +111,14 @@ focused_mds <- function(m, focus) {
   result <<- plotdata
 }
 
-# Set focus to 1, then run MDS focused on the first point
+# Set focus to 1
+
 focus <- 1
 
+# Run focused mds
+
 focused_mds(dis,focus)
+
 
 # Initial plot of the data, ordered by the first data point
 # User click will determine reordering of the plot
@@ -116,6 +128,7 @@ while (TRUE) {
   plot((result$r*cos(result$phi)), (result$r*sin(result$phi)),
        #xlim =c(), ylim= c(),
        cex=1, asp=1 )
+  plot(result$x, result$y, cex=1, asp=1)
   grid()
   
   focus <- identify((result$r*cos(result$phi)), (result$r*sin(result$phi)),
@@ -123,7 +136,6 @@ while (TRUE) {
   
   focused_mds(dis,focus)
 }
-
 
 #distnet( dis+.1, data.frame( 
 #  x = result$r*cos(result$phi),
