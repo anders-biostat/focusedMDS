@@ -108,7 +108,7 @@ focused_mds <- function(m, focus) {
     k = k + 1
     new_point <- obj_by_dist[k]
   }
-  return(plotdata)
+  return(as.data.frame(plotdata))
 }
 
 # Set focus to 1
@@ -125,33 +125,26 @@ result <- focused_mds(dis,focus)
 
 while (TRUE) {
   
-  plot((result$r*cos(result$phi)), (result$r*sin(result$phi)),
+  plot( result$r*cos(result$phi), result$r*sin(result$phi),
        #xlim =c(), ylim= c(),
        cex=1, asp=1 )
-  plot(result[,"xcoord"], result[,"ycoord"], cex=1, asp=1)
-  grid()
+  #plot(result[,"xcoord"], result[,"ycoord"], cex=1, asp=1)
+  #grid()
+  for( r in 1:20 ) lines( r*cos(phig), r*sin(phig), col="lightgray" )
   
-  focus <- identify((result$r*cos(result$phi)), (result$r*sin(result$phi)),
+    
+  focus <- identify(result$r*cos(result$phi), result$r*sin(result$phi),
                     labels = row.names(result))
   
-  focused_mds(dis,focus)
+  result <- focused_mds(dis,focus)
 }
 
+## Distnet
 obj_by_dist <- names(sort(dis[,focus]))  # sort points by distance to focus
 
-# Plotting results r against what SHOULD be R, sqrt( (xi-xj)^2 + (yi-yj)^2 )
-plot( result[,"r"], sqrt( (result[,"xcoord"] - result[focus,"xcoord"])^2 +  (result[,"ycoord"] - result[focus,"ycoord"])^2))
+dis1 <- dis[obj_by_dist,obj_by_dist]
 
-# Plotting the results r against the values we initially pulled from the matrix
+distnet(dis1, result[,c("xcoord","ycoord")], colors = ifelse(1:52==focus, "red","black"))
 
-plot( result[,"r"], dis[focus, obj_by_dist])
-
-# Plotting the results from the UNSORTED matrix by the calculation for R
-
-plot(dis[focus,], sqrt( (result[,"xcoord"] - result[focus,"xcoord"])^2 +  (result[,"ycoord"] - result[focus,"ycoord"])^2))
-
-# Plotting 
-
-#distnet( dis+.1, data.frame( 
-#  x = result$r*cos(result$phi),
-#  y = result$r*sin(result$phi) ) )
+## Change the code to output a file in the original order, 
+## and one in order of the distance of points to the focus (for plotting?)
