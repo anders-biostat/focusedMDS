@@ -100,15 +100,15 @@ focused_mds <- function(m, focus) {
     plotdata[new_point, "xcoord"] <- plotdata[new_point,"r"] * cos(plotdata[new_point,"phi"])
     plotdata[new_point, "ycoord"] <- plotdata[new_point,"r"] * sin(plotdata[new_point,"phi"])
     
-    #phigrid <- seq(0, 2*pi, length.out = 100)
-    #plot(phigrid,stress(phigrid))
-    #abline(v = minvalue)
-    #title(main= paste(new_point, "stress graph"))
+    phigrid <- seq(0, 2*pi, length.out = 100)
+    plot(phigrid,stress(phigrid))
+    abline(v = minvalue)
+    title(main= paste(new_point, "stress graph"))
     
     k = k + 1
     new_point <- obj_by_dist[k]
   }
-  result <<- plotdata
+  return(plotdata)
 }
 
 # Set focus to 1
@@ -117,7 +117,7 @@ focus <- 1
 
 # Run focused mds
 
-focused_mds(dis,focus)
+result <- focused_mds(dis,focus)
 
 
 # Initial plot of the data, ordered by the first data point
@@ -128,7 +128,7 @@ while (TRUE) {
   plot((result$r*cos(result$phi)), (result$r*sin(result$phi)),
        #xlim =c(), ylim= c(),
        cex=1, asp=1 )
-  plot(result$x, result$y, cex=1, asp=1)
+  plot(result[,"xcoord"], result[,"ycoord"], cex=1, asp=1)
   grid()
   
   focus <- identify((result$r*cos(result$phi)), (result$r*sin(result$phi)),
@@ -136,6 +136,21 @@ while (TRUE) {
   
   focused_mds(dis,focus)
 }
+
+obj_by_dist <- names(sort(dis[,focus]))  # sort points by distance to focus
+
+# Plotting results r against what SHOULD be R, sqrt( (xi-xj)^2 + (yi-yj)^2 )
+plot( result[,"r"], sqrt( (result[,"xcoord"] - result[focus,"xcoord"])^2 +  (result[,"ycoord"] - result[focus,"ycoord"])^2))
+
+# Plotting the results r against the values we initially pulled from the matrix
+
+plot( result[,"r"], dis[focus, obj_by_dist])
+
+# Plotting the results from the UNSORTED matrix by the calculation for R
+
+plot(dis[focus,], sqrt( (result[,"xcoord"] - result[focus,"xcoord"])^2 +  (result[,"ycoord"] - result[focus,"ycoord"])^2))
+
+# Plotting 
 
 #distnet( dis+.1, data.frame( 
 #  x = result$r*cos(result$phi),
