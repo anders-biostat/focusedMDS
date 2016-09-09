@@ -1,6 +1,7 @@
 # Solutions to the mathematical portion of the project in R
 # Lea Urpa, Simon Anders rotation in FIMM-EMBL PhD 
 library(distnetR)
+library(jsonlite)
 
 ## Interesting data so far:
 ##    - AML patient gene expression data, when patients distances are calculated only with top 10 most variable genes
@@ -144,6 +145,9 @@ obj_by_dist <- names(sort(dis[,focus]))  # sort points by distance to focus
 dis1 <- dis[obj_by_dist,obj_by_dist]
 
 distnet(dis1, result[,c("xcoord","ycoord")], colors = ifelse(1:52==focus, "red","black"))
+
+## Output files to javascript format
+toJSON(dis)
 
 ## Change the code to output a file in the original order, 
 ## and one in order of the distance of points to the focus (for plotting?)
