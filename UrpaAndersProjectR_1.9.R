@@ -128,8 +128,7 @@ while (TRUE) {
   plot( result$r*cos(result$phi), result$r*sin(result$phi),
        #xlim =c(), ylim= c(),
        cex=1, asp=1 )
-  #plot(result[,"xcoord"], result[,"ycoord"], cex=1, asp=1)
-  #grid()
+  #plot(result$xcoord, result$ycoord, cex=1, asp=1)
   for( r in 1:20 ) lines( r*cos(phig), r*sin(phig), col="lightgray" )
   
     
