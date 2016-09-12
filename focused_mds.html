@@ -1,13 +1,5 @@
 <!doctype html>
 
-<html>
-<script src="optimization.js" type="text/javascript">
-// Optimization function call source code
-// Figure out the best of the four options for this to use, time it!
-
-</script>
-
-
 <script src="http://numericjs.com/numeric/lib/numeric-1.2.6.js" ></script>
 
 <script>
@@ -68,12 +60,12 @@ function stress(phi) {
 	return stress
 }
 
-function g(x) {
+function g(phi_new) {
 	var j = 0
 	
 	var xnew = rs[new_point] * Math.cos(phi)
 	var ynew = rs[new_point] * Math.sin(phi)
-	
+	var rnew = rs[new_point]
 	
 	while (j < new_point) {
 		var xj = xcoords[j]
@@ -86,7 +78,13 @@ function g(x) {
 		
 		var Dij = Math.sqrt( sqr((xnew - xj)) + sqr((ynew - yj)) )
 		
+		var rj = rs[j]
+		var phi_j = phis[j]
 		
+		var deriv_stress = 
+		-1* ( 2*( dij - Dij) * 
+		(rj * rnew * Math.sin(phi_new - phi_j) / 
+		Math.sqrt((sqr(rj) - 2 * rj * rnew * Math.cos(phi_new - phi_j) + sqr(rnew) )) ))
 		
 	}
 	
@@ -94,19 +92,38 @@ function g(x) {
 
 // Make a loop to make your stress function run 100 times, measure the time of that, and divide the time by 100 to get an accurate runtime!
 
-var a = performance.now()
-
-var res = numeric.uncmin( stress, [3.14159]);
-
-console.log( res );
 console.log(obj_by_dist[new_point])
 
-document.write(res.solution)
+var a = performance.now()
+
+for (counter = 0; counter < 100; counter +1) {
+	res = numeric.uncmin( stress, [3.14159])
+	counter = counter +1
+}
+
+var b = performance.now()
+
+console.log( res )
+console.log('Without gradient: ' + (b-a)/100 + ' ms.')
+
+var c = performance.now()
+
+for (counter = 0; counter < 100; counter +1) {
+	res2 = numeric.uncmin( stress, [3.14159], g )
+	counter = counter +1
+}
+
+var d = performance.now()
+
+console.log( res2 );
+console.log('With gradient: ' + (d-c)/100 + ' ms.')
+
+console.log('For reference, solution time in R is 0.34 ms')
+
+document.write(res.solution + '       ' + res2.solution)
 
 
-b = performance.now()
 
-console.log('It took ' + (b-a) + ' ms.')
 
 </script>
 </html>
