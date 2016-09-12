@@ -38,7 +38,7 @@ function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
 
 function stress(phi) {
 	var stress = 0
-	var j = 1       //the iteration variable
+	var j = 0       //the iteration variable
 	
 	//position of the new point, given the candidate phi
 	var xnew = rs[new_point] * Math.cos(phi)
@@ -69,7 +69,26 @@ function stress(phi) {
 }
 
 function g(x) {
+	var j = 0
 	
+	var xnew = rs[new_point] * Math.cos(phi)
+	var ynew = rs[new_point] * Math.sin(phi)
+	
+	
+	while (j < new_point) {
+		var xj = xcoords[j]
+		var yj = ycoords[j]
+		
+		var dij_col = col_row_names.indexOf(obj_by_dist[new_point])
+		var dij_row = col_row_names.indexOf(obj_by_dist[j])
+		
+		var dij = dis[dij_col][dij_row]
+		
+		var Dij = Math.sqrt( sqr((xnew - xj)) + sqr((ynew - yj)) )
+		
+		
+		
+	}
 	
 }
 
