@@ -19,7 +19,7 @@ tab <- as.matrix(tab)
 tab <- apply(tab, 2, as.numeric)
 
 pmap <- pheatmap(dis)
-pmap.clust <- as.data.frame(cutree(pmap$tree_row, k=5))
+pmap.clust <- as.data.frame(cutree(pmap$tree_col, k=5))
 
 # Focused MDS function, where the input is the matrix and the point clicked by the user
 
@@ -98,9 +98,11 @@ result <- focused_mds(dis,focus)
 phi <- pi
 while (TRUE) {
   
+  colors <- pmap.clust[match(row.names(result), row.names(pmap.clust)),]
+  
   plot( result$r*cos(result$phi), result$r*sin(result$phi),
         #xlim =c(), ylim= c(),
-        cex=1, asp=1, col = pmap.clust$`cutree(pmap$tree_row, k = 5)` )
+        cex=1, asp=1, col = colors )
   #plot(result$xcoord, result$ycoord, cex=1, asp=1)
   for( r in 1:20 ) lines( r*cos(phi), r*sin(phi), col="lightgray" )
   
