@@ -102,17 +102,36 @@ result <- focused_mds(dis,focus)
 
 ##
 phig <- seq( 0, 2*pi, length.out=100 )
-while (TRUE) {
+
+for (i in 1:nrow(dis)) {
+  focus <- row.names(dis)[i]
+  
+  result <- focused_mds(dis,focus)
+  
+  png(filename= paste("focusedMDS_", i, ".png"), 
+      height =6, width= 6, units= "in", res =300)
   
   colors <- pmap.clust[match(row.names(result), row.names(pmap.clust)),]
   
   plot( result$r*cos(result$phi), result$r*sin(result$phi),
-        cex=1, asp=1, col = colors, xlab="", ylab="" )
+        cex=1, asp=1, col = colors, xlab="", ylab="" , 
+        main = paste("Focused MDS Plot", i))
   
   for( r in seq(1,200,by=20) ) lines( r*cos(phig), r*sin(phig), col="lightgray" )
   
-  focus <- identify(result$r*cos(result$phi), result$r*sin(result$phi),
-                    labels = row.names(result))
-  
-  result <- focused_mds(dis,focus)
+  dev.off()
 }
+
+## Comparison to isoMDS function
+dis1 <- dis
+dis1[dis1 == 0] <- 0.001
+
+iso_res <- as.data.frame(isoMDS(dis1, k=2))
+
+x <- iso_res$points.1
+y <- iso_res$points.2
+
+colors2 <- pmap.clust[match(row.names(iso_res), row.names(pmap.clust)),]
+png(filename="isoMDS_plot.png", height =6, width=6, units="in", res=300 )
+plot(x,y, main= "isoMDS Plot", col= colors2)
+dev.off()
