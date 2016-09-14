@@ -3,23 +3,28 @@ library(distnetR)
 library(jsonlite)
 library(Biobase)
 library(pheatmap)
+library(rje)
 
 ## MM data
 
 load("/Users/admin/Documents/Rotation1_AndersLab/DSRT_gen_prot_CN_RNA.RData")
-tab <- as.data.frame(DSRT) 
-na_table <- as.data.frame(colSums(is.na(tab)))  ## Exclude drugs that are missing for more than 4 patients
-na_table <- subset(na_table, na_table$`colSums(is.na(tab))` <= 6)
+tab <- exprs(DSRT) 
 
-tab <- tab[, names(tab) %in% row.names(na_table)]
+## Exclude drugs that are missing for more than 6 patients
+tab <- tab[ rowSums(is.na(tab)) <= 6, ]
+tab <- tab[ , colSums(is.na(tab)) == 0 ]
 
-dis <- as.matrix(dist(tab))
+dis <- as.matrix( dist( t(tab)) )
+hcl <- hclust(as.dist(dis))
+plot(hcl)
+cutree(hcl,k=5)
 
-tab <- as.matrix(tab)
-tab <- apply(tab, 2, as.numeric)
+pheatmap( tab, col=cubeHelix(100), cluster_cols = hcl )
+pheatmap( dis, col=rev(cubeHelix(100)), cluster_col=hcl, cluster_row=hcl )
 
-pmap <- pheatmap(dis)
-pmap.clust <- as.data.frame(cutree(pmap$tree_col, k=5))
+pmap.clust <- as.data.frame(cutree(hcl,k=5))
+
+
 
 # Focused MDS function, where the input is the matrix and the point clicked by the user
 
