@@ -4,6 +4,7 @@ library(jsonlite)
 library(Biobase)
 library(pheatmap)
 library(rje)
+library(MASS)
 
 ## MM data
 
@@ -100,16 +101,15 @@ focus <- row.names(dis)[1]
 result <- focused_mds(dis,focus)
 
 ##
-phi <- pi
+phig <- seq( 0, 2*pi, length.out=100 )
 while (TRUE) {
   
   colors <- pmap.clust[match(row.names(result), row.names(pmap.clust)),]
   
   plot( result$r*cos(result$phi), result$r*sin(result$phi),
-        #xlim =c(), ylim= c(),
-        cex=1, asp=1, col = colors )
-  #plot(result$xcoord, result$ycoord, cex=1, asp=1)
-  for( r in 1:20 ) lines( r*cos(phi), r*sin(phi), col="lightgray" )
+        cex=1, asp=1, col = colors, xlab="", ylab="" )
+  
+  for( r in seq(1,200,by=20) ) lines( r*cos(phig), r*sin(phig), col="lightgray" )
   
   focus <- identify(result$r*cos(result$phi), result$r*sin(result$phi),
                     labels = row.names(result))
