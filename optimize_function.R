@@ -9,7 +9,7 @@
 # before translating it again to javascript. Should be the same syntax except for 
 # variable definition and 'continue' is the same as 'next' in R.
 
-f <- function(x){ 3 + 2*x + x^8}
+f <- function(x){ cos(x) + sin(x)}
 
 # Initial parameter definition
 
@@ -36,16 +36,6 @@ optimize_js <- function(ax, bx, f, tol){
   fx = f(x)
   fv = fx
   fw = fx
-  
-  # defining a function to perform the golden section step
- # golden_section_step = function(x,xm,a,b,c){
-#    if(x >= xm) {e = a-x}
-#    else {e = b-x}
-#    d = c*e
-#    return(e) # couldn't figure out how to properly return d and e, so let's just repeat 4 lines of code.
-#    return(d)
-#  }
-  
   # main loop
   while(TRUE) {
     xm = 0.5*(a+b)
@@ -53,12 +43,12 @@ optimize_js <- function(ax, bx, f, tol){
     tol2 = 2.0 * tol1
     
     #check stopping criterion
-    if (abs(x - xm) <= (tol2 - 0.5(b-a))){
+    if (abs(x - xm) <= (tol2 - 0.5*(b-a))){
       fmin = x
       break
     }
     
-    # if necessary, perform golden section step
+    # if necessary, perform golden section step to get d
     if(abs(e) <= tol1){       
       if(x >= xm) {e = a-x
       } else {e = b-x}
@@ -75,23 +65,64 @@ optimize_js <- function(ax, bx, f, tol){
       r = e
       e = d
       
-      # If parabola is acceptable, perform golden section step
+      # If parabola is acceptable, perform golden section step to get d
       if (abs(p) >= abs(0.5*q*r) | p <= q*(a-x) | p >= q*(b-x)){ 
         if(x >= xm) {e = a-x
         } else {e = b-x}
         d = c*e
         
-        # else do parabolic interpolation
+        # else do parabolic interpolation to get d
       } else {
         d = p/q
         u = x + d
+        # f must not be evaluated too close to ax or bx
         if( (u-a) < tol2 ) {d = tol1 * sign(xm-x)}
         if( (b-u) < tol2 ) {d = tol1 * sign(xm-x)} 
       } 
     }
+    
+    # f must not be evaluated too close to x
+    if (abs(d) >= tol1) { u = x+d 
+    } else { u = x + tol1*sign(d) }
+    fu = f(u)
+    
+    # update values for a, b, v, w, and x, return to top
+    if (fu > fx) {
+      if (u < x) { a = u 
+      } else { b = u }
+      if (fu <= fw | w == x){
+        v = w
+        fv = fw
+        w = u
+        fw =fu
+        #print("The problem is at B")
+        next
+      } else if (fu <= fv | v == x | v == w){
+        v = u
+        fv = fu
+        #print("The problem is at C")
+        next
+      }
+    } else {
+      if( u >= x) { a=x 
+      } else { b=x }
+      v = w
+      fv = fw
+      w = x
+      fw = fx
+      x = u
+      fx = fu
+      #print("The problem is at D")
+      next
+    }
   }
-  
-  
-  
+  return(fmin)
 }
 
+solution <- optimize_js(0, 2*pi, f, 0.001)
+
+pdat <- data.frame( x=seq(0, 2*pi, length.out = 100),
+            y= NA)
+pdat$y <- lapply(pdat$x, f)
+
+plot(pdat$x, pdat$y)
