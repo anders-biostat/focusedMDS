@@ -15,6 +15,7 @@ library(pheatmap)
 
 # Gene expression for each patient.
 # Check with evgenii- is this the rnaseq or genomic data?
+# If RNAseq clearly the clusters are the different library preparations.
 
     load("/Users/admin/Documents/Rotation1_AndersLab/Expr.entID.expressed.rda")  
     tab <- Expr.entID
@@ -22,7 +23,8 @@ library(pheatmap)
     tab <- tab[, !names(tab) %in% c("Sample")]
 
 # Limma voom expression? over all patients, for genes in response to drugs
-
+# Yeah, this is just the normalization for library differences.
+    
     #tab <- readRDS("/Users/admin/Documents/Rotation1_AndersLab/aml.voom.f.rds") 
     #tab <- tab[,!names(tab) %in% c("Entrez")]
     #tab <- t(tab)
