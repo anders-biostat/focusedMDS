@@ -14,6 +14,7 @@ library(pheatmap)
 ## AML data
 
 # Gene expression for each patient.
+# Check with evgenii- is this the rnaseq or genomic data?
 
     load("/Users/admin/Documents/Rotation1_AndersLab/Expr.entID.expressed.rda")  
     tab <- Expr.entID
@@ -41,9 +42,9 @@ library(pheatmap)
 
 # Getting columns with top 10 variance calculations, generate dissimilarity matrix
 
-#tab_var <- apply(tab, 2, var)
-#top_10 <- names(tail(sort(tab_var),10))
-#tab <- tab[, c(top_10)]
+tab_var <- apply(tab, 2, var)
+top_10 <- names(tail(sort(tab_var),25))
+tab <- tab[, c(top_10)]
 
 
 dis <- as.matrix(dist(tab))
