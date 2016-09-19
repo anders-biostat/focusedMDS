@@ -41,13 +41,26 @@ var new_point = 2
 function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
 
 
-//var focus = col_row_names[1]
+
+
+var focus = col_row_names[0]
 
 //function focused_mds(m, focus) {
 	
-	//var obj_by_dist = 
+	var names_dists = [[col_row_names], dis[col_row_names.indexOf(focus)]]
 	
+	// NEXT, we need to sort this object by the second array, in ascending order. 
+	
+	// THEN, we can extract the first array to the obj_by_dist variable, and the 
+	// second array to the rs variable. THEN we can keep going. 
+		
 	//}
+
+document.write(names_dists)
+
+
+
+
 
 function stress(phi) {
 	var stress = 0
@@ -148,7 +161,7 @@ console.log('Optimize function: ' + (f-e)/100 + 'ms.')
 
 console.log('For reference, solution time in R is 0.34 ms')
 
-document.write(res.solution + '<br>' + res2.solution + '<br>' + res3)
+//document.write(res.solution + '<br>' + res2.solution + '<br>' + res3)
 
 
 
