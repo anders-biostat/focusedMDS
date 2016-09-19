@@ -46,7 +46,7 @@
 
 var f = function(x) { return Math.cos(x) + Math.sin(x)};
 
-function optimize_js(ax, bx, f, tol) {
+var optimize_js = function(ax, bx, f, tol) {
 	
 	// c is the squared inverse of the golden ratio
 	var c = 0.5 * (3.0 - Math.sqrt(5.0));
@@ -71,7 +71,9 @@ function optimize_js(ax, bx, f, tol) {
   	var fx = f(x);
   	var fv = fx;
   	var fw = fx;
+	
 	// Main loop
+	MainLoop:
 	while (true){
    	 	var xm = 0.5*(a+b);
     	var tol1 = eps * Math.abs(x) + tol/3.0;
@@ -80,7 +82,7 @@ function optimize_js(ax, bx, f, tol) {
 		// Check if stopping criterion
 	    if (Math.abs(x - xm) <= (tol2 - 0.5*(b-a))){
 			var fmin = x;
-	      break
+			break MainLoop;
 	    }
 		
 		// If necessary, perform golden section step to get d
@@ -107,60 +109,76 @@ function optimize_js(ax, bx, f, tol) {
 			
 			// If parabola is acceptable, perform golden section step to get d
 	        if (Math.abs(p) >= Math.abs(0.5*q*r) | p <= q*(a-x) | p >= q*(b-x)){ 
-	          if(x >= xm) {var e = a-x
-	          } else {var e = b-x}
-	          var d = c*e
+	          if(x >= xm) {
+				  var e = a-x;
+	          } else {
+				  var e = b-x;
+			  }
+	          var d = c*e;
 			  
 			  // else do parabolic interpolation to get d
 		  } else {
-	  		var d = p/q
-	        var u = x + d
+			  var d = p/q;
+			  var u = x + d;
 	        
 			//f must not be evaluated too close to ax or bx
-	        if( (u-a) < tol2 ) { var d = tol1 * Math.sign(xm-x)}
-	        if( (b-u) < tol2 ) { var d = tol1 * Math.sign(xm-x)} 
+	        if( (u-a) < tol2 ) { 
+				var d = tol1 * Math.sign(xm-x);
+			}
+	        if( (b-u) < tol2 ) { 
+				var d = tol1 * Math.sign(xm-x);
+			} 
 		  }
 	  	}
 		
 		// f must not be evaluated too close to x
-	    if (Math.abs(d) >= tol1) { var u = x+d 
-	       } else { var u = x + tol1 * Math.sign(d) }
-	       var fu = f(u)
+	    if (Math.abs(d) >= tol1) { 
+			var u = x+d; 
+	       } else { 
+			   var u = x + tol1 * Math.sign(d);
+		   }
+	       var fu = f(u);
 		
 		// update values for a, b, v, w, and x, return to top
 		   if (fu > fx) {
-		        if (u < x) { var a = u 
-		        } else { var b = u }
+		        if (u < x) { 
+					var a = u; 
+		        } else { 
+					var b = u;
+				}
 		        if (fu <= fw | w == x){
-		          var v = w
-		          var fv = fw
-		          var w = u
-		          var fw =fu
-		          continue
+					var v = w;
+					var fv = fw;
+					var w = u;
+					var fw =fu;
+					continue MainLoop;
 					
 		        } else if (fu <= fv | v == x | v == w){
-		          var v = u
-		          var fv = fu
-		          continue
+					var v = u;
+					var fv = fu;
+					continue MainLoop;
 		        }
 				
 		      } else {
-		        if( u >= x) {var a=x 
-		        } else {var b=x }
-		        var v = w
-		        var fv = fw
-		        var w = x
-		        var fw = fx
-		        var x = u
-		        var fx = fu
-		        continue
+		        if( u >= x) {
+					var a=x; 
+		        } else {
+					var b=x; 
+				}
+					var v = w;
+					var fv = fw;
+					var w = x;
+					var fw = fx;
+					var x = u;
+					var fx = fu;
+					continue MainLoop;
 		      }
-		    return fmin
 	} // while loop end tag	
+	return fmin;
 } //function end bracket
 
 var solution = optimize_js(0,( 2*Math.PI), f, 0.001)
-console.log(optimize_js(0,( 2*Math.PI), f, 0.001))
+console.log(solution)
 
 
 
