@@ -41,28 +41,13 @@ var new_point = 2
 function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
 
 
-function focused_mds(m, focus) {
+//var focus = col_row_names[1]
+
+//function focused_mds(m, focus) {
 	
-	var obj_by_dist = 
+	//var obj_by_dist = 
 	
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	//}
 
 function stress(phi) {
 	var stress = 0
@@ -131,32 +116,39 @@ function g(phi_new) {
 console.log(obj_by_dist[new_point])
 
 var a = performance.now()
-
 for (counter = 0; counter < 100; counter +1) {
 	res = numeric.uncmin( stress, [3.14159])
 	counter = counter +1
 }
-
 var b = performance.now()
 
 console.log( res )
 console.log('Without gradient: ' + (b-a)/100 + ' ms.')
 
 var c = performance.now()
-
 for (counter = 0; counter < 100; counter +1) {
 	res2 = numeric.uncmin( stress, [3.14159], g )
 	counter = counter +1
 }
-
 var d = performance.now()
 
 console.log( res2 );
 console.log('With gradient: ' + (d-c)/100 + ' ms.')
 
+var e = performance.now()
+for (counter = 0; counter < 100; counter +1) {
+	res3 = optimize_js(0, 2*Math.PI, stress, 0.001)
+	counter = counter +1
+}
+var f = performance.now()
+
+console.log( res3 );
+console.log('Optimize function: ' + (f-e)/100 + 'ms.')
+
+
 console.log('For reference, solution time in R is 0.34 ms')
 
-document.write(res.solution + '       ' + res2.solution)
+document.write(res.solution + '<br>' + res2.solution + '<br>' + res3)
 
 
 
