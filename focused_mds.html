@@ -19,20 +19,9 @@ var col_row_names = ["FHRB_1064_1","FHRB_1064_5","FHRB_1132_1","FHRB_1145_6","FH
 
 var obj_by_dist = ["FHRB_1064_1","FHRB_4543_2","FHRB_706_2","FHRB_560_9","FHRB_250_1","FHRB_800_1","FHRB_2787_1","FHRB_1132_1","FHRB_3853_2","FHRB_4583_2","FHRB_1064_5","FHRB_2080_1","FHRB_3822_2","FHRB_1216_2","FHRB_560_1","FHRB_4401_2","FHRB_3444_2","FHRB_4630_2","FHRB_4624_2","FHRB_1690_2","FHRB_2791_7","FHRB_2791_2","FHRB_370_2","FHRB_1867_1","FHRB_1145_6","FHRB_252_2","FHRB_252_5","FHRB_718_1","FHRB_252_3","FHRB_1886_2","FHRB_1399_2","FHRB_252_1","FHRB_1399_3","FHRB_4416_2","FHRB_4453_2","FHRB_4325_2","FHRB_1886_8","FHRB_1280_2","FHRB_1713_1","FHRB_4653_2","FHRB_4361_2","FHRB_3667_2","FHRB_2095_1","FHRB_3496_2","FHRB_4686_2","FHRB_4374_2","FHRB_4172_2","FHRB_4690_2","FHRB_3904_2","FHRB_4368_2","FHRB_600_2","FHRB_600_3"] 
 
-var phis = [0, Math.PI/2 ]
-
 var rs = [0,1.2413,1.5071,1.8103,2.0053,2.2209,2.3202,2.4407,2.4414,2.4852,2.4996,2.5843,2.7452,2.7597,2.7698,2.7863,2.8209,3.1531,3.3253,3.4728,6.2938,8.2285,9.2684,9.3921,9.4893,9.5065,9.5349,9.5666,9.582,9.6734,9.7336,9.7374,9.9376,9.9461,10.0374,10.0672,10.0874,10.0884,10.0947,10.1451,10.1483,10.1886,10.2327,10.259,10.35,10.4597,10.5349,10.5376,10.6038,10.643,11.6772,11.8841] 
 
-
-var xcoords = [0,  rs[1] * Math.cos(phis[1]) ]
-
-var ycoords = [0,  rs[1] * Math.sin(phis[1]) ]
-
-var new_point = 2
-
 //var phi = Math.PI / 2
-	
-
 
 
 // Hey!!! Javascript uses 0 start indexing, not 1 start!!! Don't mess it up!!!
@@ -41,58 +30,81 @@ var new_point = 2
 function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
 
 
+var focal_point = col_row_names[0]
 
-
-var focus = col_row_names[0]
-
-//function focused_mds(m, focus) {
+function focused_mds(m, focus) {
 	
-	var names_dists = [[col_row_names], dis[col_row_names.indexOf(focus)]]
+	var names_dists = [[col_row_names], dis[col_row_names.indexOf(focal_point)]];
 	
 	// NEXT, we need to sort this object by the second array, in ascending order. 
 	
 	// THEN, we can extract the first array to the obj_by_dist variable, and the 
 	// second array to the rs variable. THEN we can keep going. 
+	
+	var obj_by_dist = names_dists[1];  // array of names, ordered by distance to focus
+	
+	var rs = names_dists[1]; // array of r distances to focus, ordered by distance to focus
+	
+	var phis = [0, Math.PI/2 ];
+	
+	var xcoords = [0,  rs[1] * Math.cos(phis[1]) ];
+
+	var ycoords = [0,  rs[1] * Math.sin(phis[1]) ];
+	
+	var new_point = 2;
+	
+	function stress(phi) {
+		var stress = 0;
+		var j = 0;       //the iteration variable
+	
+		//position of the new point, given the candidate phi
+		var xnew = rs[new_point] * Math.cos(phi);
+		var ynew = rs[new_point] * Math.sin(phi);
+	
+		while (j < new_point ) {
+			//position of the point we are comparing to new point
+			var xj = xcoords[j];
+			var yj = ycoords[j];
 		
-	//}
+			//index of column names of matrix, in ORIGINAL order
+			var dij_col = col_row_names.indexOf(obj_by_dist[new_point]);
+			var dij_row = col_row_names.indexOf(obj_by_dist[j]);
+		
+			// actual distance given by dis matrix
+			var dij = dis[dij_col][dij_row];
+			
+			// calculated distance, given where we placed the point
+			var Dij = Math.sqrt( sqr((xnew - xj)) + sqr((ynew - yj)) );
+		
+			var stress = stress + sqr( (dij - Dij));
+		
+			var j = j + 1;
+		}
+		return stress;
+	}
+	
+	var k = new_point;
+	
+	while (k <= obj_by_dist.length) {
+		var stress_res = optimize_for_js(0, 2*Math.PI, stress, 0.001);
+		
+		phis.push(stress_res);
+		xcoords.push( rs[k] * Math.cos(phis[k]) );
+		ycoords.push( rs[k] * Math.sin(phis[k]) );
+		
+		k = k + 1;	
+	}
+	
+	return [ [obj_by_dist], [rs], [phis], [xcoords], [ycoords] ];
+}
 
 document.write(names_dists)
 
 
+var result = focused_mds(dis, focal_point)
 
 
 
-function stress(phi) {
-	var stress = 0
-	var j = 0       //the iteration variable
-	
-	//position of the new point, given the candidate phi
-	var xnew = rs[new_point] * Math.cos(phi)
-	xcoords.push(xnew)
-	var ynew = rs[new_point] * Math.sin(phi)
-	ycoords.push(ynew)
-	
-	// define a sqr function and use that instead of Math.pow.
-	
-	while (j < new_point ) {
-		//position of the point comparing to new point
-		var xj = xcoords[j]
-		var yj = ycoords[j]
-		
-		//index of column names of matrix, in ORIGINAL order
-		var dij_col = col_row_names.indexOf(obj_by_dist[new_point])
-		var dij_row = col_row_names.indexOf(obj_by_dist[j])
-		
-		var dij = dis[dij_col][dij_row]
-				
-		var Dij = Math.sqrt( sqr((xnew - xj)) + sqr((ynew - yj)) )
-		
-		var stress = stress + sqr( (dij - Dij))
-		
-		var j = j + 1
-	}
-	return stress
-}
 
 function g(phi_new) {
 	var j = 0
