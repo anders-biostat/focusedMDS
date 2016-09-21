@@ -14,7 +14,6 @@ var dis = [[0,4.2577,5.8469,11.2645,6.1091,13.0915,11.9253,12.404,6.8019,12.1117
 
 var col_row_names = ["FHRB_1064_1","FHRB_1064_5","FHRB_1132_1","FHRB_1145_6","FHRB_1216_2","FHRB_1280_2","FHRB_1399_2","FHRB_1399_3","FHRB_1690_2","FHRB_1713_1","FHRB_1867_1","FHRB_1886_2","FHRB_1886_8","FHRB_2080_1","FHRB_2095_1","FHRB_250_1","FHRB_252_1","FHRB_252_2","FHRB_252_3","FHRB_252_5","FHRB_2787_1","FHRB_2791_2","FHRB_2791_7","FHRB_3444_2","FHRB_3496_2","FHRB_3667_2","FHRB_370_2","FHRB_3822_2","FHRB_3853_2","FHRB_3904_2","FHRB_4172_2","FHRB_4325_2","FHRB_4361_2","FHRB_4368_2","FHRB_4374_2","FHRB_4401_2","FHRB_4416_2","FHRB_4453_2","FHRB_4543_2","FHRB_4583_2","FHRB_4624_2","FHRB_4630_2","FHRB_4653_2","FHRB_4686_2","FHRB_4690_2","FHRB_560_1","FHRB_560_9","FHRB_600_2","FHRB_600_3","FHRB_706_2","FHRB_718_1","FHRB_800_1"] 
 
-//var phi = Math.PI / 2
 
 
 // Hey!!! Javascript uses 0 start indexing, not 1 start!!! Don't mess it up!!!
@@ -96,51 +95,26 @@ function focused_mds(m, focus) {
 		return stress;
 	}
 	
-	var k = new_point;
-	
-	while (k <= obj_by_dist.length) {
+	while (new_point < obj_by_dist.length) {
 		var stress_res = optimize_js(0, 2*Math.PI, stress, 0.001);
 		
 		phis.push(stress_res);
-		xcoords.push( rs[k] * cos(phis[k]) );
-		ycoords.push( rs[k] * sin(phis[k]) );
+		xcoords.push( rs[new_point] * cos(phis[new_point]) );
+		ycoords.push( rs[new_point] * sin(phis[new_point]) );
 		
-		k = k + 1;	
+		new_point = new_point + 1;	
 	}
 	
-	return [ [obj_by_dist], [rs], [phis], [xcoords], [ycoords] ];
-}
-
-
-// gradient function for use with numeric package optimization
-function g(phi_new) {
-	var j = 0
+	var result = {
+		obj_by_dist: obj_by_dist,
+		rs: rs,
+		phis: phis,
+		xcoords: xcoords,
+		ycoords: ycoords
+	};
 	
-	var xnew = rs[new_point] * Math.cos(phi)
-	var ynew = rs[new_point] * Math.sin(phi)
-	var rnew = rs[new_point]
 	
-	while (j < new_point) {
-		var xj = xcoords[j]
-		var yj = ycoords[j]
-		
-		var dij_col = col_row_names.indexOf(obj_by_dist[new_point])
-		var dij_row = col_row_names.indexOf(obj_by_dist[j])
-		
-		var dij = dis[dij_col][dij_row]
-		
-		var Dij = Math.sqrt( sqr((xnew - xj)) + sqr((ynew - yj)) )
-		
-		var rj = rs[j]
-		var phi_j = phis[j]
-		
-		var deriv_stress = 
-		-1* ( 2*( dij - Dij) * 
-		(rj * rnew * Math.sin(phi_new - phi_j) / 
-		Math.sqrt((sqr(rj) - 2 * rj * rnew * Math.cos(phi_new - phi_j) + sqr(rnew) )) ))
-		
-	}
-	
+	return result;
 }
 
 
@@ -152,9 +126,11 @@ var result = focused_mds(dis, focal_point)
 
 var b = performance.now()
 
-document.write( result )
+document.write( result.ycoords )
+
 console.log('One run took: ' + (b-a)/100 + ' ms.')
 
+console.log( result )
 
 //for (counter = 0; counter < 100; counter +1) {
 //	res = numeric.uncmin( stress, [3.14159])
