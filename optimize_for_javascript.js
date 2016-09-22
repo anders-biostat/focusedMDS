@@ -39,13 +39,7 @@
 //      this function subprogram is a slightly modified  version  of  the
 //  algol  60 procedure  localmin  given in richard brent, algorithms for
 //  minimization without derivatives, prentice - hall, inc. (1973).
-
-//var ax = 0
-//var bx = 2*Math.PI
-//var tol = 0.001
-
-var f = function(x) { return Math.cos(x) + Math.sin(x)};
-
+	
 var optimize_js = function(ax, bx, f, tol) {
 	
 	// c is the squared inverse of the golden ratio
@@ -176,9 +170,6 @@ var optimize_js = function(ax, bx, f, tol) {
 	} // while loop end tag	
 	return fmin;
 } //function end bracket
-
-var solution = optimize_js(0,( 2*Math.PI), f, 0.001)
-console.log(solution)
 
 
 
