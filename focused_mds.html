@@ -1,12 +1,39 @@
 <!doctype html>
-
 <html>
-<script src="optimize_for_javascript.js" type="text/javascript">
-// Optimiztion() function from R, translated to Javascript
+<head>
+<meta charset="utf-8">
+<style>
+.chart {
+	
+}
 
-</script>
+.main text {
+	font: 10px sans-serif;
+}
 
-<script src="http://numericjs.com/numeric/lib/numeric-1.2.6.js" ></script>
+.axis line, .axis path {
+	shape-rendering: crispEdges;
+	stroke: black;
+	fill: none;
+}
+
+circle {
+	fill: steelblue;
+}	
+
+</style>
+
+<script src="optimize_for_javascript.js" type="text/javascript"></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+
+</head>
+
+<body>
+	<div class='content'>
+		<!-- /the chart goes here -->
+	</div>	
+</body>
+</html>
 
 <script>
 
@@ -16,7 +43,7 @@ var col_row_names = ["FHRB_1064_1","FHRB_1064_5","FHRB_1132_1","FHRB_1145_6","FH
 
 
 
-// Hey!!! Javascript uses 0 start indexing, not 1 start!!! Don't mess it up!!!
+// Hey!!! Javascript uses 0 start indexing, not 1 start!!! Don't forget!!!
 
 
 function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
@@ -110,7 +137,8 @@ function focused_mds(m, focus) {
 		rs: rs,
 		phis: phis,
 		xcoords: xcoords,
-		ycoords: ycoords
+		ycoords: ycoords,
+		col: "red"
 	};
 	
 	
@@ -126,21 +154,52 @@ var result = focused_mds(dis, focal_point)
 
 var b = performance.now()
 
-document.write( result.ycoords )
-
 console.log('One run took: ' + (b-a)/100 + ' ms.')
 
 console.log( result )
 
-//for (counter = 0; counter < 100; counter +1) {
-//	res = numeric.uncmin( stress, [3.14159])
-//	counter = counter +1
-	//}
 
-//document.write(res.solution + '<br>' + res2.solution + '<br>' + res3)
+// OK OK OK, let's write some D3 now.
+
+var plotcoords = result.xcoords.map(function(e,i){
+	return [e, result.ycoords[i]];
+});
 
 
+console.log(plotcoords)
+
+var margin = {top: 20, right: 15, bottom: 60, left: 60}
+   , width = 960 - margin.left - margin.right
+   , height = 500 - margin.top - margin.bottom;
+
+var x = d3.scaleLinear()
+          .domain([0, d3.max(plotcoords, function(d) { return d[0]; })])
+          .range([0, width]);
+
+var y = d3.scaleLinear()
+		  .domain([0, d3.max(plotcoords, function(d) { return d[1]; })])
+		  .range([ height, 0]);
+
+var chart = d3.select('body')
+	.append('svg:svg')
+	.attr('width', width + margin.right + margin.left)
+	.attr('height', height + margin.top + margin.bottom)
+	.attr('class', 'chart');
+
+var main = chart.append('g')
+	.attr('transform','translate(' + margin.left + ',' + margin.top + ')')
+	.attr('width', width)
+	.attr('height', height)
+	.attr('class', 'main');
+
+var g = main.append("svg:g");
+
+g.selectAll("scatter-dots")
+   .data(plotcoords)
+   .enter().append("svg:circle")
+		  .attr("cx", function(d,i) { return x(d[0]); })
+		  .attr("cy", function(d) { return y(d[1]); })
+		  .attr("r", 8);
 
 
 </script>
-</html>
