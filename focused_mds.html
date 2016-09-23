@@ -17,9 +17,7 @@
 	fill: none;
 }
 
-circle {
-	fill: steelblue;
-}	
+circle {}	
 
 .svg-container {
 	display: inline-block;
@@ -65,9 +63,11 @@ var col_row_names = ["FHRB_1064_1","FHRB_1064_5","FHRB_1132_1","FHRB_1145_6","FH
 function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
 
 
-var focal_point = col_row_names[0]
+var focus_point = col_row_names[0]
 
-
+function repeat(str, num) {
+	return (new Array(num+1)).join(str);
+}
 
 
 function focused_mds(m, focus) {
@@ -76,8 +76,8 @@ function focused_mds(m, focus) {
 	
 	var sin = Math.sin
 	
-	// call distances for focal_point
-	var dists = dis[col_row_names.indexOf(focal_point)];
+	// call distances for focus_point
+	var dists = dis[col_row_names.indexOf(focus_point)];
 	
 	// zip together in an array of arrays the names and distances
 	var names_dists = col_row_names.map(function(e,i){
@@ -148,13 +148,19 @@ function focused_mds(m, focus) {
 		new_point = new_point + 1;	
 	}
 	
+	var colors = []
+	
+	for (i=0;i<obj_by_dist.length;i++) { 
+		colors.push("steelblue");
+	}
+	
 	var result = {
 		obj_by_dist: obj_by_dist,
 		rs: rs,
 		phis: phis,
 		xcoords: xcoords,
 		ycoords: ycoords,
-		col: "steelblue"
+		col: colors
 	};
 	
 	
@@ -162,11 +168,11 @@ function focused_mds(m, focus) {
 }
 
 
-console.log(focal_point)
+console.log(focus_point)
 
 var a = performance.now()
 
-var result = focused_mds(dis, focal_point)
+var result = focused_mds(dis, focus_point)
 
 var b = performance.now()
 
@@ -179,19 +185,21 @@ console.log( result )
 
 // clean up this business, with regards to the spacings etc
 
-var plotdata = [];
-
-var i = 0
-
-for(var i=0; i < result.obj_by_dist.length; i++) {
-	var temp_obj = {
-		id: result.obj_by_dist[i],
-		x: result.xcoords[i],
-		y: result.ycoords[i],
-		col: result.col[i]
+function createPlotdata(result) {
+	var plotdata = [];
+	for(var i=0; i < result.obj_by_dist.length; i++) {
+		var temp_obj = {
+			id: result.obj_by_dist[i],
+			x: result.xcoords[i],
+			y: result.ycoords[i],
+			col: result.col[i]
+		};
+		plotdata.push(temp_obj);
 	};
-	plotdata.push(temp_obj);
-};
+	return plotdata
+}
+
+var plotdata = createPlotdata(result)
 
 var margin = {top: 20, right: 60, bottom: 60, left: 60}
    , width = 960 - margin.left - margin.right
@@ -227,15 +235,18 @@ g.selectAll("scatter-dots")
 		  .attr("cx", function(d,i) { return x(d['x']); })
 		  .attr("cy", function(d) { return y(d['y']); })
 		  .attr("r", 8)
-		  .on( "dblclick", function(d,i) {								
-		  	alert( "You have clicked on point " + d['id'] + " at xcoord " + d['x'] + ' and ycoord '+ d['y'] )		
+          .attr("fill", function(d) { return d['col']})
+		  .on( "dblclick", function(d,i) {
+			  alert( "You have clicked on point " + d['id'])
+			  var focus_point = d['id']
+			  var result = focused_mds(dis, focus_point)
+			  var plotdata = createPlotdata(result)
+			  
+			  g.selectAll("scatter-dots").transition()
+			     .attr("fill", "red")
+			  
+			  
 		  });
-
-// OK so  that last bit gives the data on a doubleclick, reconfigure your input data to be like
-		  // [ { x: 10, y: 30, name: FCHR... , col: "red"}, ... ] etc. And then figure out how to 
-		  // call that correctly.
-		  
-		  // This should involve making that indirection you got away without having to make last time!
 
 d3.select("div#chartId")
 		  .append("div")
