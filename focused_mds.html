@@ -63,14 +63,14 @@ var col_row_names = ["FHRB_1064_1","FHRB_1064_5","FHRB_1132_1","FHRB_1145_6","FH
 function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
 
 
-var focus_point = col_row_names[0]
+var focus_input = col_row_names[0]
 
 function repeat(str, num) {
 	return (new Array(num+1)).join(str);
 }
 
 
-function focused_mds(m, focus) {
+function focused_mds(m, focus_point) {
 	
 	var cos = Math.cos
 	
@@ -148,9 +148,9 @@ function focused_mds(m, focus) {
 		new_point = new_point + 1;	
 	}
 	
-	var colors = []
+	var colors = ["red"]
 	
-	for (i=0;i<obj_by_dist.length;i++) { 
+	for (i=0;i< (obj_by_dist.length - 1) ;i++) { 
 		colors.push("steelblue");
 	}
 	
@@ -167,12 +167,9 @@ function focused_mds(m, focus) {
 	return result;
 }
 
-
-console.log(focus_point)
-
 var a = performance.now()
 
-var result = focused_mds(dis, focus_point)
+var result = focused_mds(dis, focus_input)
 
 var b = performance.now()
 
@@ -216,37 +213,65 @@ var y = d3.scaleLinear()
 		  .range([ height, 0]);
 
 var chart = d3.select('body')
-	.append('svg:svg')
-	.attr('width', width + margin.right + margin.left)
-	.attr('height', height + margin.top + margin.bottom)
-	.attr('class', 'chart');
+	 .append('svg:svg')
+	 .attr('width', width + margin.right + margin.left)
+	 .attr('height', height + margin.top + margin.bottom)
+	 .attr('class', 'chart');
 
 var main = chart.append('g')
-	.attr('transform','translate(' + margin.left + ',' + margin.top + ')')
-	.attr('width', width)
-	.attr('height', height)
-	.attr('class', 'main');
+	 .attr('transform','translate(' + margin.left + ',' + margin.top + ')')
+	 .attr('width', width)
+	 .attr('height', height)
+	 .attr('class', 'main');
 
 var g = main.append("svg:g");
 
-g.selectAll("scatter-dots")
-   .data(plotdata)
-   .enter().append("svg:circle")
-		  .attr("cx", function(d,i) { return x(d['x']); })
-		  .attr("cy", function(d) { return y(d['y']); })
-		  .attr("r", 8)
-          .attr("fill", function(d) { return d['col']})
-		  .on( "dblclick", function(d,i) {
-			  alert( "You have clicked on point " + d['id'])
-			  var focus_point = d['id']
-			  var result = focused_mds(dis, focus_point)
-			  var plotdata = createPlotdata(result)
+
+var update = function(new_focus_input) {
+	var focus_input = new_focus_input
+	var result = focused_mds(dis,focus_input)
+	var plotdata = createPlotdata(result)
+	console.log(result)
+	
+	return plotdata
+}
+
+g.selectAll("circle")
+    .data(plotdata)
+    .enter().append("circle")
+		   .attr("cx", function(d,i) { return x(d['x']); })
+		   .attr("cy", function(d) { return y(d['y']); })
+		   .attr("r", 8)
+           .attr("fill", function(d) { return d['col']})
+		   .on( "dblclick", function(d,i) {
 			  
-			  g.selectAll("scatter-dots").transition()
-			     .attr("fill", "red")
+			   //rerun focused MDS and update plotdata
+			   console.log( "You have clicked on point " + d['id'])
+	           var result = focused_mds(dis, d['id'])
+	           var plotdata = createPlotdata(result)
+	           console.log(result)
 			  
-			  
+			   
+			   // update scale domains
+			   x.domain([d3.min(plotdata, function(d) { return d['y']; }), 
+			       d3.max(plotdata, function(d) { return d['y']; })]);
+			   y.domain([d3.min(plotdata, function(d) { return d['y']; }), 
+			       d3.max(plotdata, function(d) { return d['y']; }) ]);  
+			   
+			   // update all circles
+			   g.selectAll("circle")
+			       .data(plotdata)
+			       .transition()
+			       .duration(1000)
+			   	   .attr("cx", function(d,i) { return x(d['x']); })
+			       .attr("cy", function(d) { return y(d['y']); })
+				   .attr("fill", function(d) { return d['col']; }) 		 	  
 		  });
+		  
+		  
+
+		  
+
 
 d3.select("div#chartId")
 		  .append("div")
