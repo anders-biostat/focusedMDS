@@ -154,7 +154,7 @@ function focused_mds(m, focus) {
 		phis: phis,
 		xcoords: xcoords,
 		ycoords: ycoords,
-		col: "red"
+		col: "steelblue"
 	};
 	
 	
@@ -179,25 +179,32 @@ console.log( result )
 
 // clean up this business, with regards to the spacings etc
 
-var plotcoords = result.xcoords.map(function(e,i){
-	return [e, result.ycoords[i]];
-});
+var plotdata = [];
 
+var i = 0
 
-console.log(plotcoords)
+for(var i=0; i < result.obj_by_dist.length; i++) {
+	var temp_obj = {
+		id: result.obj_by_dist[i],
+		x: result.xcoords[i],
+		y: result.ycoords[i],
+		col: result.col[i]
+	};
+	plotdata.push(temp_obj);
+};
 
-var margin = {top: 20, right: 15, bottom: 60, left: 60}
+var margin = {top: 20, right: 60, bottom: 60, left: 60}
    , width = 960 - margin.left - margin.right
    , height = 500 - margin.top - margin.bottom;
 
 var x = d3.scaleLinear()
-          .domain([d3.min(plotcoords, function(d) {return d[0]; })
-			  , d3.max(plotcoords, function(d) { return d[0]; })])
+          .domain([d3.min(plotdata, function(d) {return d['x']; })
+			  , d3.max(plotdata, function(d) { return d['x']; })])
           .range([0, width]);
 
 var y = d3.scaleLinear()
-		  .domain([d3.min(plotcoords, function(d) { return d[1]; }), 
-			  d3.max(plotcoords, function(d) { return d[1]; })])
+		  .domain([d3.min(plotdata, function(d) { return d['y']; }), 
+			  d3.max(plotdata, function(d) { return d['y']; })])
 		  .range([ height, 0]);
 
 var chart = d3.select('body')
@@ -215,13 +222,13 @@ var main = chart.append('g')
 var g = main.append("svg:g");
 
 g.selectAll("scatter-dots")
-   .data(plotcoords)
+   .data(plotdata)
    .enter().append("svg:circle")
-		  .attr("cx", function(d,i) { return x(d[0]); })
-		  .attr("cy", function(d) { return y(d[1]); })
+		  .attr("cx", function(d,i) { return x(d['x']); })
+		  .attr("cy", function(d) { return y(d['y']); })
 		  .attr("r", 8)
 		  .on( "dblclick", function(d,i) {								
-		  	alert( "You have clicked on point" + i + " at " + d )		
+		  	alert( "You have clicked on point " + d['id'] + " at xcoord " + d['x'] + ' and ycoord '+ d['y'] )		
 		  });
 
 // OK so  that last bit gives the data on a doubleclick, reconfigure your input data to be like
