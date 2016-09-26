@@ -43,9 +43,7 @@ circle {}
 </head>
 
 <body>
-	<div class='content'>
-		<!-- /the chart goes here -->
-	</div>	
+
 </body>
 </html>
 
@@ -169,20 +167,13 @@ function focused_mds(m, focus_point) {
 	
 	var colors = color_vector
 	
-	var stroke = [ "magenta" ]
-
-	for (i=0;i< (obj_by_dist.length - 1) ;i++) { 
-		stroke.push("");
-	}
-	
 	var result = {
 		obj_by_dist: obj_by_dist,
 		rs: rs,
 		phis: phis,
 		xcoords: xcoords,
 		ycoords: ycoords,
-		col: colors,
-		stroke: stroke
+		col: colors
 	};
 	
 	
@@ -201,23 +192,28 @@ console.log( result )
 
 
 // OK OK OK, let's write some D3 now.
+var stroke_colors = [ "magenta" ]
+
+for (i=0;i< (col_row_names.length - 1) ;i++) { 
+	stroke_colors.push("");
+}
+
+console.log(stroke_colors)
 
 function createPlotdata(result) {
-	var plotdata = [];
+	var plotdata = {};
 	for(var i=0; i < result.obj_by_dist.length; i++) {
-		var temp_obj = {
-			[result.obj_by_dist[i] ]: {
+		plotdata[result.obj_by_dist[i]] = {
 			x: result.xcoords[i],
 			y: result.ycoords[i],
 			col: result.col[i],
-			stroke: result.stroke[i]}
-		};
-		plotdata.push(temp_obj);
+			stroke: stroke_colors[i]
+		}
 	};
-	return plotdata
-}
+	return plotdata;
+};
 
-var plotdata = createPlotdata(result)
+var plotdata = createPlotdata(result);
 
 console.log(plotdata)
 
@@ -226,13 +222,13 @@ var margin = {top: 20, right: 60, bottom: 60, left: 60}
    , height = 500 - margin.top - margin.bottom;
 
 var x = d3.scaleLinear()
-          .domain([d3.min(plotdata, function(d) {return result['xcoords']; })
-			  , d3.max(plotdata, function(d) { return result['ycoords']; })])
+          .domain([d3.min(col_row_names, function(d,i) {return plotdata[d]['x']; })
+			  , d3.max(col_row_names, function(d,i) { return plotdata[d]['y']; })])
           .range([0, width]);
 
 var y = d3.scaleLinear()
-		  .domain([d3.min(plotdata, function(d) { return d['y']; }), 
-			  d3.max(plotdata, function(d) { return d['y']; })])
+		  .domain([d3.min(col_row_names, function(d,i) { return plotdata[d]['x']; }), 
+			  d3.max(col_row_names, function(d,i) { return plotdata[d]['y']; })])
 		  .range([ height, 0]);
 
 var chart = d3.select('body')
@@ -249,67 +245,65 @@ var main = chart.append('g')
 
 var g = main.append("svg:g");
 
-	
 // Add svg text element to g
 var text = g.selectAll("text")
-	            .data(plotdata)
+	            .data(col_row_names)
 	            .enter()
 	            .append("text");
 				
 	
 var textLabels = text
-	  	  		     .attr('x', function(d) {return x(d['x']); })
-					 .attr('y', function(d) {return y(d['y']); })
-					 .text( function (d) {return d['id']})
+	  	  		     .attr('x', function(d,i) {return x(plotdata[d]['x']); })
+					 .attr('y', function(d,i) {return y(plotdata[d]['y']); })
+					 .text( function (d) {return d })
 					 .attr("font-family", "sans-serif")
 					 .attr("font-size", "12px")
 					 .attr("fill", "black")
-					 
-					 
-
 
 g.selectAll("circle")
-    .data(plotdata)
+    .data(col_row_names)
     .enter().append("circle")
-		   .attr("cx", function(d,i) { return x(d['x']); })
-		   .attr("cy", function(d) { return y(d['y']); })
+		   .attr("cx", function(d,i) {return x(plotdata[d]['x']); })
+		   .attr("cy", function(d,i) {return y(plotdata[d]['y']); })
 		   .attr("r", 8)
-           .attr("fill", function(d) { return d['col']})
-		   .attr("stroke", function(d) { return d['stroke']})
+           .attr("fill", function(d,i) { return plotdata[d]['col']})
+		   .attr("stroke", function(d,i) { return plotdata[d]['stroke']})
 		   .on( "dblclick", function(d,i) {
 			  
 			   //rerun focused MDS and update plotdata
-			   console.log( "You have clicked on point " + d['id'])
-	           var result = focused_mds(dis, d['id'])
+			   console.log( "You have clicked on point " + d)
+	           var result = focused_mds(dis, d)
 	           var plotdata = createPlotdata(result)
 	           console.log(result)
 			   
 		   // update scale domains
-		   x.domain([d3.min(plotdata, function(d) { return d['x']; }), 
-		       d3.max(plotdata, function(d) { return d['x']; })]);
-		   y.domain([d3.min(plotdata, function(d) { return d['y']; }), 
-		       d3.max(plotdata, function(d) { return d['y']; }) ]); 
+		   x.domain([d3.min(col_row_names, function(d,i) {return plotdata[d]['x']; }), 
+		       d3.max(col_row_names, function(d,i) { return plotdata[d]['x']; })]);
+		   y.domain([d3.min(col_row_names, function(d,i) { return plotdata[d]['y']; }), 
+		       d3.max(col_row_names, function(d,i) { return plotdata[d]['y']; }) ]); 
 			   
 			   // update all circles
 			   g.selectAll("circle")
-			       .data(plotdata)
+			       .data(col_row_names)
 			       .transition()
 			       .duration(1000)
-			   	   .attr("cx", function(d,i) { return x(d['x']); })
-			       .attr("cy", function(d) { return y(d['y']); })
-				  // .attr("fill", function(d) { return d['col']; }) 
+			   	   .attr("cx", function(d,i) {return x(plotdata[d]['x']); })
+			       .attr("cy", function(d,i) {return y(plotdata[d]['y']); })
+				   .attr("fill", function(d,i) { return plotdata[d]['col']})
+			   	   .attr("stroke", function(d,i) { return plotdata[d]['stroke']})
 			   
 			   g.selectAll("text")
-			       .data(plotdata)
+			       .data(col_row_names)
 			       .transition()
 			       .duration(1000)
-			       .attr('x', function(d) {return x(d['x']); })
-			       .attr('y', function(d) {return y(d['y']); })
-			       .text(function (d) {return d['id']})
+			       .attr('x', function(d,i) {return x(plotdata[d]['x']); })
+			       .attr('y', function(d,i) {return y(plotdata[d]['y']); })
+			       .text( function (d) {return d })
 			    		 	  
 		  });
 		  
-		  
+
+	  
 
 		 
 </script>
