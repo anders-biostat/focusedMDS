@@ -69,6 +69,25 @@ function repeat(str, num) {
 	return (new Array(num+1)).join(str);
 }
 
+var color_vector = []
+
+for (i=0;i< (col_row_names.length)/4 ;i++) { 
+	color_vector.push("steelblue");
+}
+
+for (i=0;i< (col_row_names.length)/4 ;i++) { 
+	color_vector.push("darkred");
+}
+
+for (i=0;i< (col_row_names.length)/4 ;i++) { 
+	color_vector.push("darkorange");
+}
+
+for (i=0;i< (col_row_names.length)/4 ;i++) { 
+	color_vector.push("darkgreen");
+}
+
+console.log(color_vector.length)
 
 function focused_mds(m, focus_point) {
 	
@@ -148,10 +167,12 @@ function focused_mds(m, focus_point) {
 		new_point = new_point + 1;	
 	}
 	
-	var colors = ["red"]
+	var colors = color_vector
 	
+	var stroke = [ "magenta" ]
+
 	for (i=0;i< (obj_by_dist.length - 1) ;i++) { 
-		colors.push("steelblue");
+		stroke.push("");
 	}
 	
 	var result = {
@@ -160,7 +181,8 @@ function focused_mds(m, focus_point) {
 		phis: phis,
 		xcoords: xcoords,
 		ycoords: ycoords,
-		col: colors
+		col: colors,
+		stroke: stroke
 	};
 	
 	
@@ -180,16 +202,15 @@ console.log( result )
 
 // OK OK OK, let's write some D3 now.
 
-// clean up this business, with regards to the spacings etc
-
 function createPlotdata(result) {
 	var plotdata = [];
 	for(var i=0; i < result.obj_by_dist.length; i++) {
 		var temp_obj = {
-			id: result.obj_by_dist[i],
+			[result.obj_by_dist[i] ]: {
 			x: result.xcoords[i],
 			y: result.ycoords[i],
-			col: result.col[i]
+			col: result.col[i],
+			stroke: result.stroke[i]}
 		};
 		plotdata.push(temp_obj);
 	};
@@ -198,13 +219,15 @@ function createPlotdata(result) {
 
 var plotdata = createPlotdata(result)
 
+console.log(plotdata)
+
 var margin = {top: 20, right: 60, bottom: 60, left: 60}
    , width = 960 - margin.left - margin.right
    , height = 500 - margin.top - margin.bottom;
 
 var x = d3.scaleLinear()
-          .domain([d3.min(plotdata, function(d) {return d['x']; })
-			  , d3.max(plotdata, function(d) { return d['x']; })])
+          .domain([d3.min(plotdata, function(d) {return result['xcoords']; })
+			  , d3.max(plotdata, function(d) { return result['ycoords']; })])
           .range([0, width]);
 
 var y = d3.scaleLinear()
@@ -226,15 +249,24 @@ var main = chart.append('g')
 
 var g = main.append("svg:g");
 
-
-var update = function(new_focus_input) {
-	var focus_input = new_focus_input
-	var result = focused_mds(dis,focus_input)
-	var plotdata = createPlotdata(result)
-	console.log(result)
 	
-	return plotdata
-}
+// Add svg text element to g
+var text = g.selectAll("text")
+	            .data(plotdata)
+	            .enter()
+	            .append("text");
+				
+	
+var textLabels = text
+	  	  		     .attr('x', function(d) {return x(d['x']); })
+					 .attr('y', function(d) {return y(d['y']); })
+					 .text( function (d) {return d['id']})
+					 .attr("font-family", "sans-serif")
+					 .attr("font-size", "12px")
+					 .attr("fill", "black")
+					 
+					 
+
 
 g.selectAll("circle")
     .data(plotdata)
@@ -243,6 +275,7 @@ g.selectAll("circle")
 		   .attr("cy", function(d) { return y(d['y']); })
 		   .attr("r", 8)
            .attr("fill", function(d) { return d['col']})
+		   .attr("stroke", function(d) { return d['stroke']})
 		   .on( "dblclick", function(d,i) {
 			  
 			   //rerun focused MDS and update plotdata
@@ -250,13 +283,12 @@ g.selectAll("circle")
 	           var result = focused_mds(dis, d['id'])
 	           var plotdata = createPlotdata(result)
 	           console.log(result)
-			  
 			   
-			   // update scale domains
-			   x.domain([d3.min(plotdata, function(d) { return d['y']; }), 
-			       d3.max(plotdata, function(d) { return d['y']; })]);
-			   y.domain([d3.min(plotdata, function(d) { return d['y']; }), 
-			       d3.max(plotdata, function(d) { return d['y']; }) ]);  
+		   // update scale domains
+		   x.domain([d3.min(plotdata, function(d) { return d['x']; }), 
+		       d3.max(plotdata, function(d) { return d['x']; })]);
+		   y.domain([d3.min(plotdata, function(d) { return d['y']; }), 
+		       d3.max(plotdata, function(d) { return d['y']; }) ]); 
 			   
 			   // update all circles
 			   g.selectAll("circle")
@@ -265,25 +297,21 @@ g.selectAll("circle")
 			       .duration(1000)
 			   	   .attr("cx", function(d,i) { return x(d['x']); })
 			       .attr("cy", function(d) { return y(d['y']); })
-				   .attr("fill", function(d) { return d['col']; }) 		 	  
+				  // .attr("fill", function(d) { return d['col']; }) 
+			   
+			   g.selectAll("text")
+			       .data(plotdata)
+			       .transition()
+			       .duration(1000)
+			       .attr('x', function(d) {return x(d['x']); })
+			       .attr('y', function(d) {return y(d['y']); })
+			       .text(function (d) {return d['id']})
+			    		 	  
 		  });
 		  
 		  
 
-		  
-
-
-d3.select("div#chartId")
-		  .append("div")
-		  .classed("svg-container", true) // container class to make it responsive
-		  .append("svg")
-		  // responsive SVG needs these two attributes and no width and height attr
-		  .attr("preserveAspectRatio", "xMinYMin meet")
-		  .attr("viewBox", "0 0 600 400")
-		  //class to make it responsive
-		  .classed("svg-content-responsive", true);
-
-
+		 
 </script>
 		  
 		  
