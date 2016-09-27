@@ -38,9 +38,14 @@ var col_row_names = ["FHRB_1064_1","FHRB_1064_5","FHRB_1132_1","FHRB_1145_6","FH
 
 
 function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
-
+	
+var cos = Math.cos
+	
+var sin = Math.sin
 
 var focus_input = col_row_names[0]
+
+var abs = Math.abs
 
 function repeat(str, num) {
 	return (new Array(num+1)).join(str);
@@ -65,9 +70,6 @@ for (i=0;i< (col_row_names.length)/4 ;i++) {
 }
 
 color_ids = [col_row_names, color_vector]
-console.log(color_ids)
-console.log(color_ids[0].length)
-console.log(color_ids[0][1])
 
 // In the end, we want the user to upload a table like 
 // color_ids above. This function will create an indexable
@@ -85,13 +87,8 @@ function createColorObject(color_ids){
 
 var color_object = createColorObject(color_ids);
 
-console.log(color_object);
 
 function focused_mds(m, focus_point) {
-	
-	var cos = Math.cos
-	
-	var sin = Math.sin
 	
 	// call distances for focus_point
 	var dists = dis[col_row_names.indexOf(focus_point)];
@@ -186,25 +183,54 @@ var result = focused_mds(dis, focus_input)
 var b = performance.now()
 
 console.log('One run took: ' + (b-a)/100 + ' ms.')
+console.log('this is result object:')
+console.log(result)
 
-console.log( result )
 
 
-// OK OK OK, let's write some D3 now.
+
+// /// OK OK OK, let's write some D3 now.
+
+// Set window size and margins
+var margin = {top: 60, right: 60, bottom: 60, left: 60}
+   , width = 700 - margin.left - margin.right
+   , height = 700 - margin.top - margin.bottom;
+
+// Create array of stroke colors
 var stroke_colors = [ "magenta" ]
 
 for (i=0;i< (col_row_names.length - 1) ;i++) { 
 	stroke_colors.push("");
 }
 
-console.log(stroke_colors)
+// Translate the x and y coordinates to the center of the browser
+function translate_xy(xcoords, ycoords){
+	var xcoords_trans = [];
+	for(var i=0; i < xcoords.length; i++){
+		xcoords_trans.push(xcoords[i] + width/2)
+	};
+	
+	var ycoords_trans = [];
+	for (var i=0; i < ycoords.length; i++){
+		ycoords_trans.push(ycoords[i] + height/2)
+	};
+	
+	var xy_trans = {
+		x: xcoords_trans,
+		y: ycoords_trans
+	};
+	return xy_trans
+}
 
+var xy_trans = translate_xy(result.xcoords, result.ycoords)
+
+// Create object containing data needed for plot
 function createPlotdata(result) {
 	var plotdata = {};
 	for(var i=0; i < result.obj_by_dist.length; i++) {
 		plotdata[result.obj_by_dist[i]] = {
-			x: result.xcoords[i],
-			y: result.ycoords[i],
+			x: xy_trans.x[i],
+			y: xy_trans.y[i],
 			stroke: stroke_colors[i]
 		}
 	};
@@ -213,42 +239,37 @@ function createPlotdata(result) {
 
 var plotdata = createPlotdata(result);
 
-console.log(plotdata)
+// Create a scale factor to be used in scaleLinear functions
+function findScaleFactor(result) {
+	var min_x = d3.min(result.xcoords, function(d) {return d; })
+	var min_y = d3.min(result.ycoords, function(d) {return d; })
+	
+	var max_x = d3.max(result.xcoords, function(d) {return d; })
+	var max_y = d3.max(result.ycoords, function(d) {return d; })
+	
+	if(abs(min_x) > abs(min_y)) { var min = abs(min_x)
+	} else { var min = abs(min_y)}
+	
+	if(abs(max_x) > abs(max_y)) { var max = abs(min_x)
+	} else {var max = abs(max_y)}
+	
+	if( max > min) {
+		var scalefactor = max
+	} else {var scalefactor = min}
 
-var margin = {top: 20, right: 60, bottom: 60, left: 60}
-   , width = 960 - margin.left - margin.right
-   , height = 500 - margin.top - margin.bottom;
+	return scalefactor
+}
 
+var scalefactor = findScaleFactor(result)
+
+// Create scaling factors
 var x = d3.scaleLinear()
-          .domain([d3.min(col_row_names, function(d,i) {return plotdata[d]['x']; })
-			  , d3.max(col_row_names, function(d,i) { return plotdata[d]['y']; })])
+          .domain([xy_trans.x[0] - scalefactor, xy_trans.x[0] + scalefactor] )
           .range([0, width]);
 
 var y = d3.scaleLinear()
-		  .domain([d3.min(col_row_names, function(d,i) { return plotdata[d]['x']; }), 
-			  d3.max(col_row_names, function(d,i) { return plotdata[d]['y']; })])
+		  .domain([xy_trans.x[0] - scalefactor, xy_trans.x[0] + scalefactor] )
 		  .range([ height, 0]);
-
-// From Simon:
-// This function takes two linear scales, and extends the domain of one of them to get 
-// the desired x:y aspect ratio 'asp'.
-function fix_aspect_ratio( scaleX, scaleY, asp ) {
-  var xfactor = ( scaleX.range()[1] - scaleX.range()[0] ) / 
-      ( scaleX.domain()[1] - scaleX.domain()[0] )
-  var yfactor = ( scaleY.range()[1] - scaleY.range()[0] ) / 
-      ( scaleY.domain()[1] - scaleY.domain()[0] )
-  var curasp = xfactor / yfactor  // current aspect ratio
-      if( curasp > asp ) {  // x domain has to be expanded
-  var cur_dom_length = ( scaleX.domain()[1] - scaleX.domain()[0] )
-  var extension = cur_dom_length * ( curasp/asp - 1 ) / 2
-  scaleX.domain( [ scaleX.domain()[0] - extension, scaleX.domain()[1] + extension ] )      
-} else { // y domain has to be expanded
-  var cur_dom_length = ( scaleY.domain()[1] - scaleY.domain()[0] )
-  var extension = cur_dom_length * ( asp/curasp - 1 ) / 2
-  scaleY.domain( [ scaleY.domain()[0] - extension, scaleY.domain()[1] + extension ] )            
-}
-}
-
 
 var chart = d3.select('body')
 	 .append('svg:svg')
@@ -270,7 +291,7 @@ var text = g.selectAll("text")
 	            .enter()
 	            .append("text");
 				
-	
+// Create text labels	
 var textLabels = text
 	  	  		     .attr('x', function(d,i) {return x(plotdata[d]['x']); })
 					 .attr('y', function(d,i) {return y(plotdata[d]['y']); })
@@ -279,6 +300,23 @@ var textLabels = text
 					 .attr("font-size", "12px")
 					 .attr("fill", "black")
 
+// Create grid ellipses
+var ellipse_coords = {
+	rx: [100,200,300,400,500,600,700,800,900,1000],
+	ry: [100,200,300,400,500,600,700,800,900,1000]	
+}
+
+g.selectAll("ellipse")
+    .data(col_row_names)
+	.enter().append("ellipse")
+	    .attr("cx", function(d) {return (plotdata[focus_input]['x']); })
+        .attr("cy", function(d) {return (plotdata[focus_input]['y']); })
+        .attr("rx", function(d,i) {return ( ellipse_coords['rx'][i]); })
+        .attr("ry", function(d,i) {return ( ellipse_coords['ry'][i]); })
+		.attr("fill", "none")
+		.attr("stroke","gray")
+
+// Create scatterplot circles with clickable reordering
 g.selectAll("circle")
     .data(col_row_names)
     .enter().append("circle")
@@ -292,22 +330,15 @@ g.selectAll("circle")
 			   //rerun focused MDS and update plotdata
 			   console.log( "You have clicked on point " + d)
 	           var result = focused_mds(dis, d)
+			   var xy_trans = translate_xy(result.xcoords, result.ycoords)
 	           var plotdata = createPlotdata(result)
+			   var scalefactor = findScaleFactor(result)
 	           console.log(result)
 			   
-			   
-			   
 		       // update scale domains
-		       x.domain([d3.min(col_row_names, function(d,i) {return plotdata[d]['x']; }), 
-		           d3.max(col_row_names, function(d,i) { return plotdata[d]['x']; })]);
-		       y.domain([d3.min(col_row_names, function(d,i) { return plotdata[d]['y']; }), 
-		           d3.max(col_row_names, function(d,i) { return plotdata[d]['y']; }) ]); 
-			   
-			   
-			   // fix aspect ratio
-			  // fix_aspect_ratio(x,y,1.0)
-				   
-				   
+		       x.domain([xy_trans.x[0] - scalefactor, xy_trans.x[0] + scalefactor] )
+		       y.domain([xy_trans.x[0] - scalefactor, xy_trans.x[0] + scalefactor] )
+			   		      
 			   // update all circles
 			   g.selectAll("circle")
 			       .data(col_row_names)
@@ -318,6 +349,7 @@ g.selectAll("circle")
 				   .attr("fill", function(d,i) { return color_object[d]['col']})
 			   	   .attr("stroke", function(d,i) { return plotdata[d]['stroke']})
 			   
+			   //update text coordinates
 			   g.selectAll("text")
 			       .data(col_row_names)
 			       .transition()
@@ -325,12 +357,7 @@ g.selectAll("circle")
 			       .attr('x', function(d,i) {return x(plotdata[d]['x']); })
 			       .attr('y', function(d,i) {return y(plotdata[d]['y']); })
 			       .text( function (d) {return d })
-			    		 	  
 		  });
-
-
-	  
-
 		 
 </script>
 		  
