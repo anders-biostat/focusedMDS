@@ -11,29 +11,8 @@
 	font: 10px sans-serif;
 }
 
-.axis line, .axis path {
-	shape-rendering: crispEdges;
-	stroke: black;
-	fill: none;
-}
 
 circle {}	
-
-.svg-container {
-	display: inline-block;
-	position: relative;
-	width: 100%;
-	padding-bottom: 100%;
-	vertical-align: top;
-	overflow: hidden;
-}
-
-.svg-content-responsive {
-	display: inline-block;
-	position: absolute;
-	top: 10px;
-	left: 0;
-}
 
 </style>
 
@@ -85,7 +64,28 @@ for (i=0;i< (col_row_names.length)/4 ;i++) {
 	color_vector.push("darkgreen");
 }
 
-console.log(color_vector.length)
+color_ids = [col_row_names, color_vector]
+console.log(color_ids)
+console.log(color_ids[0].length)
+console.log(color_ids[0][1])
+
+// In the end, we want the user to upload a table like 
+// color_ids above. This function will create an indexable
+// object from that table.
+
+function createColorObject(color_ids){
+	var color_object = {};
+	for(var i=0; i < color_ids[0].length; i++) {
+		color_object[color_ids[0][i]] = {
+			col: color_ids[1][i]
+		}
+	};
+	return color_object;
+};
+
+var color_object = createColorObject(color_ids);
+
+console.log(color_object);
 
 function focused_mds(m, focus_point) {
 	
@@ -172,8 +172,7 @@ function focused_mds(m, focus_point) {
 		rs: rs,
 		phis: phis,
 		xcoords: xcoords,
-		ycoords: ycoords,
-		col: colors
+		ycoords: ycoords
 	};
 	
 	
@@ -206,7 +205,6 @@ function createPlotdata(result) {
 		plotdata[result.obj_by_dist[i]] = {
 			x: result.xcoords[i],
 			y: result.ycoords[i],
-			col: result.col[i],
 			stroke: stroke_colors[i]
 		}
 	};
@@ -230,6 +228,27 @@ var y = d3.scaleLinear()
 		  .domain([d3.min(col_row_names, function(d,i) { return plotdata[d]['x']; }), 
 			  d3.max(col_row_names, function(d,i) { return plotdata[d]['y']; })])
 		  .range([ height, 0]);
+
+// From Simon:
+// This function takes two linear scales, and extends the domain of one of them to get 
+// the desired x:y aspect ratio 'asp'.
+function fix_aspect_ratio( scaleX, scaleY, asp ) {
+  var xfactor = ( scaleX.range()[1] - scaleX.range()[0] ) / 
+      ( scaleX.domain()[1] - scaleX.domain()[0] )
+  var yfactor = ( scaleY.range()[1] - scaleY.range()[0] ) / 
+      ( scaleY.domain()[1] - scaleY.domain()[0] )
+  var curasp = xfactor / yfactor  // current aspect ratio
+      if( curasp > asp ) {  // x domain has to be expanded
+  var cur_dom_length = ( scaleX.domain()[1] - scaleX.domain()[0] )
+  var extension = cur_dom_length * ( curasp/asp - 1 ) / 2
+  scaleX.domain( [ scaleX.domain()[0] - extension, scaleX.domain()[1] + extension ] )      
+} else { // y domain has to be expanded
+  var cur_dom_length = ( scaleY.domain()[1] - scaleY.domain()[0] )
+  var extension = cur_dom_length * ( asp/curasp - 1 ) / 2
+  scaleY.domain( [ scaleY.domain()[0] - extension, scaleY.domain()[1] + extension ] )            
+}
+}
+
 
 var chart = d3.select('body')
 	 .append('svg:svg')
@@ -266,7 +285,7 @@ g.selectAll("circle")
 		   .attr("cx", function(d,i) {return x(plotdata[d]['x']); })
 		   .attr("cy", function(d,i) {return y(plotdata[d]['y']); })
 		   .attr("r", 8)
-           .attr("fill", function(d,i) { return plotdata[d]['col']})
+           .attr("fill", function(d,i) { return color_object[d]['col']})
 		   .attr("stroke", function(d,i) { return plotdata[d]['stroke']})
 		   .on( "dblclick", function(d,i) {
 			  
@@ -276,12 +295,19 @@ g.selectAll("circle")
 	           var plotdata = createPlotdata(result)
 	           console.log(result)
 			   
-		   // update scale domains
-		   x.domain([d3.min(col_row_names, function(d,i) {return plotdata[d]['x']; }), 
-		       d3.max(col_row_names, function(d,i) { return plotdata[d]['x']; })]);
-		   y.domain([d3.min(col_row_names, function(d,i) { return plotdata[d]['y']; }), 
-		       d3.max(col_row_names, function(d,i) { return plotdata[d]['y']; }) ]); 
 			   
+			   
+		       // update scale domains
+		       x.domain([d3.min(col_row_names, function(d,i) {return plotdata[d]['x']; }), 
+		           d3.max(col_row_names, function(d,i) { return plotdata[d]['x']; })]);
+		       y.domain([d3.min(col_row_names, function(d,i) { return plotdata[d]['y']; }), 
+		           d3.max(col_row_names, function(d,i) { return plotdata[d]['y']; }) ]); 
+			   
+			   
+			   // fix aspect ratio
+			  // fix_aspect_ratio(x,y,1.0)
+				   
+				   
 			   // update all circles
 			   g.selectAll("circle")
 			       .data(col_row_names)
@@ -289,7 +315,7 @@ g.selectAll("circle")
 			       .duration(1000)
 			   	   .attr("cx", function(d,i) {return x(plotdata[d]['x']); })
 			       .attr("cy", function(d,i) {return y(plotdata[d]['y']); })
-				   .attr("fill", function(d,i) { return plotdata[d]['col']})
+				   .attr("fill", function(d,i) { return color_object[d]['col']})
 			   	   .attr("stroke", function(d,i) { return plotdata[d]['stroke']})
 			   
 			   g.selectAll("text")
@@ -301,7 +327,7 @@ g.selectAll("circle")
 			       .text( function (d) {return d })
 			    		 	  
 		  });
-		  
+
 
 	  
 
