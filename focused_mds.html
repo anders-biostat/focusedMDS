@@ -47,6 +47,10 @@ var focus_input = col_row_names[0]
 
 var abs = Math.abs
 
+function add(a,b) {
+	return a + b;
+}
+
 function repeat(str, num) {
 	return (new Array(num+1)).join(str);
 }
@@ -114,8 +118,20 @@ function focused_mds(m, focus_point) {
 		return names_dists[1]
 	});
 	
-	var phis = [0, Math.PI/2 ];
+	// Define function to optimize second point's phi, such that distance 
+	// from previous phis for each point is minimized
 	
+
+	
+	
+	if (typeof result == 'undefined'){
+		var phis = [0, Math.PI/2 ]
+	} else {
+		var phis = [0]	
+		
+		
+	}
+
 	var xcoords = [0,  rs[1] * cos(phis[1]) ];
 
 	var ycoords = [0,  rs[1] * sin(phis[1]) ];
@@ -187,12 +203,61 @@ console.log('this is result object:')
 console.log(result)
 
 
+// Write a function that gives a phi for the second plot point that
+// minimizes the movement of the points on the graph.
+
+var next_input = col_row_names[1]
+
+var phi = Math.PI/2
+
+function phi_change(prevResult, phi ){
+	var phis = {
+		old: prevResult.phis,
+		new: 
+	}
+	
+}
+
+var current_res = focused_mds(dis, focus_input)
+
+var new_res = focused_mds(dis, next_input)
+
+var phis = {
+	old: current_res.phis,
+	new: new_res.phis,
+	change: []
+}
+
+for(i=0; i< phis.old.length; i++){
+	phis.change[i] = 
+		Math.sqrt( sqr( phis.old[i] - phis.new[i] ))
+}
+
+var delta_phi = phis.change.reduce(add,0)
+
+
+// Nope, this is wrong. We need to actually change the focused_mds function, such that
+// we input the current results, and that the focused_mds function takes a phi_2 value
+// that specifies the position of the second point's phi such that it minimizes the movement
+// of the phis from the current positions.
+
+// That means we have to include an if statement that asks whether a 'result' object exists,
+// and if it doesn't exist to assign the second phi to pi/2. If it does, it runs the optimization.
+
+//function phi_change(phi){
+
+	
+	//}
+	
+
+console.log(x)
+
 
 
 // /// OK OK OK, let's write some D3 now.
 
 // Set window size and margins
-var margin = {top: 60, right: 60, bottom: 60, left: 60}
+var margin = {top: 90, right: 90, bottom: 90, left: 90}
    , width = 700 - margin.left - margin.right
    , height = 700 - margin.top - margin.bottom;
 
@@ -241,21 +306,14 @@ var plotdata = createPlotdata(result);
 
 // Create a scale factor to be used in scaleLinear functions
 function findScaleFactor(result) {
-	var min_x = d3.min(result.xcoords, function(d) {return d; })
-	var min_y = d3.min(result.ycoords, function(d) {return d; })
+	var max_x = d3.max(result.xcoords, function(d) {return abs(d); })
+	var max_y = d3.max(result.ycoords, function(d) {return abs(d); })
 	
-	var max_x = d3.max(result.xcoords, function(d) {return d; })
-	var max_y = d3.max(result.ycoords, function(d) {return d; })
+	console.log( max_x, max_y)
 	
-	if(abs(min_x) > abs(min_y)) { var min = abs(min_x)
-	} else { var min = abs(min_y)}
-	
-	if(abs(max_x) > abs(max_y)) { var max = abs(min_x)
-	} else {var max = abs(max_y)}
-	
-	if( max > min) {
-		var scalefactor = max
-	} else {var scalefactor = min}
+	if( max_x > max_y) {
+		var scalefactor = max_x
+	} else {var scalefactor = max_y}
 
 	return scalefactor
 }
@@ -292,18 +350,18 @@ var text = g.selectAll("text")
 	            .append("text");
 				
 // Create text labels	
-var textLabels = text
-	  	  		     .attr('x', function(d,i) {return x(plotdata[d]['x']); })
-					 .attr('y', function(d,i) {return y(plotdata[d]['y']); })
-					 .text( function (d) {return d })
-					 .attr("font-family", "sans-serif")
-					 .attr("font-size", "12px")
-					 .attr("fill", "black")
+//var textLabels = text
+//	  	  		     .attr('x', function(d,i) {return x(plotdata[d]['x']); })
+//					 .attr('y', function(d,i) {return y(plotdata[d]['y']); })
+//					 .text( function (d) {return d })
+//					 .attr("font-family", "sans-serif")
+//					 .attr("font-size", "12px")
+//					 .attr("fill", "black")
 
 // Create grid ellipses
 var ellipse_coords = {
-	rx: [100,200,300,400,500,600,700,800,900,1000],
-	ry: [100,200,300,400,500,600,700,800,900,1000]	
+	rx: [50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000],
+	ry: [50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000]	
 }
 
 g.selectAll("ellipse")
@@ -322,18 +380,24 @@ g.selectAll("circle")
     .enter().append("circle")
 		   .attr("cx", function(d,i) {return x(plotdata[d]['x']); })
 		   .attr("cy", function(d,i) {return y(plotdata[d]['y']); })
-		   .attr("r", 8)
+		   .attr("r", 6)
            .attr("fill", function(d,i) { return color_object[d]['col']})
 		   .attr("stroke", function(d,i) { return plotdata[d]['stroke']})
 		   .on( "dblclick", function(d,i) {
 			  
-			   //rerun focused MDS and update plotdata
+			   //rerun focused MDS, translate points to center of screen,
+			   // update plotdata, calculate new scaling factor
 			   console.log( "You have clicked on point " + d)
 	           var result = focused_mds(dis, d)
 			   var xy_trans = translate_xy(result.xcoords, result.ycoords)
 	           var plotdata = createPlotdata(result)
 			   var scalefactor = findScaleFactor(result)
 	           console.log(result)
+			   console.log(scalefactor)
+			   console.log(xy_trans.x[0])
+			   console.log(xy_trans.y[0])
+			   
+			   
 			   
 		       // update scale domains
 		       x.domain([xy_trans.x[0] - scalefactor, xy_trans.x[0] + scalefactor] )
@@ -343,28 +407,23 @@ g.selectAll("circle")
 			   g.selectAll("circle")
 			       .data(col_row_names)
 			       .transition()
-			       .duration(1000)
+			       .duration(5000)
 			   	   .attr("cx", function(d,i) {return x(plotdata[d]['x']); })
 			       .attr("cy", function(d,i) {return y(plotdata[d]['y']); })
 				   .attr("fill", function(d,i) { return color_object[d]['col']})
 			   	   .attr("stroke", function(d,i) { return plotdata[d]['stroke']})
-			   
-			   //update text coordinates
-			   g.selectAll("text")
-			       .data(col_row_names)
-			       .transition()
-			       .duration(1000)
-			       .attr('x', function(d,i) {return x(plotdata[d]['x']); })
-			       .attr('y', function(d,i) {return y(plotdata[d]['y']); })
-			       .text( function (d) {return d })
-		  });
+		  }
+		  
+		 // .on("mouseover", function(d){
+		//	  var nodeSelection = d3.select(this).style({opacity: '0.8'});
+		//	  nodeSelection.select("text").style({opacity: '1.0'})
+		 // })
+	  );
 		 
 </script>
 		  
 		  
-		  
-		  
-		  
+	  
 		  
 		  
 		  
