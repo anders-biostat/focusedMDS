@@ -36,6 +36,9 @@ var col_row_names = ["FHRB_1064_1","FHRB_1064_5","FHRB_1132_1","FHRB_1145_6","FH
 
 // Hey!!! Javascript uses 0 start indexing, not 1 start!!! Don't forget!!!
 
+/// Initializing variables and defining functions
+
+var flag = 0
 
 function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
 	
@@ -54,6 +57,8 @@ function add(a,b) {
 function repeat(str, num) {
 	return (new Array(num+1)).join(str);
 }
+
+/// Preparing the color/ID vector
 
 var color_vector = []
 
@@ -91,6 +96,7 @@ function createColorObject(color_ids){
 
 var color_object = createColorObject(color_ids);
 
+/// Focused MDS function
 
 function focused_mds(m, focus_point) {
 	
@@ -117,26 +123,8 @@ function focused_mds(m, focus_point) {
 	var rs = names_dists.map(function(names_dists){
 		return names_dists[1]
 	});
-	
-	// Define function to optimize second point's phi, such that distance 
-	// from previous phis for each point is minimized
-	
-
-	
-	
-	if (typeof result == 'undefined'){
-		var phis = [0, Math.PI/2 ]
-	} else {
-		var phis = [0]	
 		
-		
-	}
-
-	var xcoords = [0,  rs[1] * cos(phis[1]) ];
-
-	var ycoords = [0,  rs[1] * sin(phis[1]) ];
-	
-	var new_point = 2;
+	// Define the stress function 
 	
 	function stress(phi) {
 		var stress = 0;
@@ -167,6 +155,55 @@ function focused_mds(m, focus_point) {
 		}
 		return stress;
 	}
+
+	// Define function to optimize second point's phi, such that distance 
+	// from previous phis for each point is minimized
+	
+	function phi_change(phi){
+		var new_phis = [0, phi]
+		
+		var new_point = 2
+		
+		while (new_point < obj_by_dist.length) {
+			var stress_res = optimize_js(0, 2*Math.PI, stress, 0.001);
+		
+			new_phis.push(stress_res);
+		
+			new_point = new_point + 1;	
+		}
+		
+		var phis = {
+			old: old_phis,
+			new: new_phis,
+			change: []
+		}
+		
+		for(i=0; i< phis.old.length; i++){
+			phis.change[i] = 
+				Math.sqrt( sqr( phis.old[i] - phis.new[i] ))
+		}
+		var delta_phi = phis.change.reduce(add,0)
+		return delta_phi
+		
+	}
+	
+	if (flag == 0){
+		var phis = [0, Math.PI/2 ]
+		console.log('Set 2nd phi to 2pi')
+		} else if (flag == 1){
+		var phis = [0]	
+			
+		var optimal_2nd_phi = optimize_js(0, 2*Math.PI, phi_change, 0.01)
+		
+		phis.push(optimal_2nd_phi)
+		console.log('Set 2nd phi to optimal second phi, ', optimal_2nd_phi)	
+	}
+	
+	var xcoords = [0,  rs[1] * cos(phis[1]) ];
+
+	var ycoords = [0,  rs[1] * sin(phis[1]) ];
+	
+	var new_point = 2;
 	
 	while (new_point < obj_by_dist.length) {
 		var stress_res = optimize_js(0, 2*Math.PI, stress, 0.001);
@@ -188,6 +225,7 @@ function focused_mds(m, focus_point) {
 		ycoords: ycoords
 	};
 	
+	flag = 1
 	
 	return result;
 }
@@ -201,60 +239,9 @@ var b = performance.now()
 console.log('One run took: ' + (b-a)/100 + ' ms.')
 console.log('this is result object:')
 console.log(result)
+console.log('flag is: ', flag)
 
-
-// Write a function that gives a phi for the second plot point that
-// minimizes the movement of the points on the graph.
-
-var next_input = col_row_names[1]
-
-var phi = Math.PI/2
-
-function phi_change(prevResult, phi ){
-	var phis = {
-		old: prevResult.phis,
-		new: 
-	}
-	
-}
-
-var current_res = focused_mds(dis, focus_input)
-
-var new_res = focused_mds(dis, next_input)
-
-var phis = {
-	old: current_res.phis,
-	new: new_res.phis,
-	change: []
-}
-
-for(i=0; i< phis.old.length; i++){
-	phis.change[i] = 
-		Math.sqrt( sqr( phis.old[i] - phis.new[i] ))
-}
-
-var delta_phi = phis.change.reduce(add,0)
-
-
-// Nope, this is wrong. We need to actually change the focused_mds function, such that
-// we input the current results, and that the focused_mds function takes a phi_2 value
-// that specifies the position of the second point's phi such that it minimizes the movement
-// of the phis from the current positions.
-
-// That means we have to include an if statement that asks whether a 'result' object exists,
-// and if it doesn't exist to assign the second phi to pi/2. If it does, it runs the optimization.
-
-//function phi_change(phi){
-
-	
-	//}
-	
-
-console.log(x)
-
-
-
-// /// OK OK OK, let's write some D3 now.
+/// D3 specifications for plotting
 
 // Set window size and margins
 var margin = {top: 90, right: 90, bottom: 90, left: 90}
@@ -308,8 +295,6 @@ var plotdata = createPlotdata(result);
 function findScaleFactor(result) {
 	var max_x = d3.max(result.xcoords, function(d) {return abs(d); })
 	var max_y = d3.max(result.ycoords, function(d) {return abs(d); })
-	
-	console.log( max_x, max_y)
 	
 	if( max_x > max_y) {
 		var scalefactor = max_x
@@ -374,6 +359,8 @@ g.selectAll("ellipse")
 		.attr("fill", "none")
 		.attr("stroke","gray")
 
+var old_phis = result.phis
+
 // Create scatterplot circles with clickable reordering
 g.selectAll("circle")
     .data(col_row_names)
@@ -388,17 +375,18 @@ g.selectAll("circle")
 			   //rerun focused MDS, translate points to center of screen,
 			   // update plotdata, calculate new scaling factor
 			   console.log( "You have clicked on point " + d)
-	           var result = focused_mds(dis, d)
-			   var xy_trans = translate_xy(result.xcoords, result.ycoords)
-	           var plotdata = createPlotdata(result)
-			   var scalefactor = findScaleFactor(result)
-	           console.log(result)
-			   console.log(scalefactor)
-			   console.log(xy_trans.x[0])
-			   console.log(xy_trans.y[0])
 			   
+			   var next_input = d
+			   var new_result = focused_mds(dis, d)
+			   var xy_trans = translate_xy(new_result.xcoords, new_result.ycoords)
+	           var plotdata = createPlotdata(new_result)
+			   var scalefactor = findScaleFactor(new_result)
 			   
-			   
+			   result = new_result
+			   old_phis = result.phis
+			   console.log('this is theupdated result: ', result)
+			   console.log('this is the updated old_phis var: ', old_phis)
+
 		       // update scale domains
 		       x.domain([xy_trans.x[0] - scalefactor, xy_trans.x[0] + scalefactor] )
 		       y.domain([xy_trans.x[0] - scalefactor, xy_trans.x[0] + scalefactor] )
@@ -407,7 +395,7 @@ g.selectAll("circle")
 			   g.selectAll("circle")
 			       .data(col_row_names)
 			       .transition()
-			       .duration(5000)
+			       .duration(3000)
 			   	   .attr("cx", function(d,i) {return x(plotdata[d]['x']); })
 			       .attr("cy", function(d,i) {return y(plotdata[d]['y']); })
 				   .attr("fill", function(d,i) { return color_object[d]['col']})
@@ -419,7 +407,8 @@ g.selectAll("circle")
 		//	  nodeSelection.select("text").style({opacity: '1.0'})
 		 // })
 	  );
-		 
+
+ 
 </script>
 		  
 		  
