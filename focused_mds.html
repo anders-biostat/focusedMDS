@@ -99,7 +99,8 @@ var color_object = createColorObject(color_ids);
 /// Focused MDS function
 
 function focused_mds(m, focus_point) {
-	
+
+		
 	// call distances for focus_point
 	var dists = dis[col_row_names.indexOf(focus_point)];
 	
@@ -164,6 +165,15 @@ function focused_mds(m, focus_point) {
 		
 		var new_point = 2
 		
+		// call distances for new focus_point
+		var rs = dis[col_row_names.indexOf(next_input)];
+		
+		// sort the array by the distances
+		rs.sort(function(a,b)
+		{
+			return a[1] - b[1];
+		});
+
 		while (new_point < obj_by_dist.length) {
 			var stress_res = optimize_js(0, 2*Math.PI, stress, 0.001);
 		
@@ -172,27 +182,45 @@ function focused_mds(m, focus_point) {
 			new_point = new_point + 1;	
 		}
 		
-		var phis = {
-			old: old_phis,
-			new: new_phis,
+		var tempObj = {
+			old_phis: old_phis,
+			old_rs: old_rs,
+			old_x: [],
+			old_y: [],
+			new_phis: new_phis,
+			new_rs: rs ,
+			new_x: [],
+			new_y: [],
 			change: []
 		}
 		
-		for(i=0; i< phis.old.length; i++){
-			phis.change[i] = 
-				Math.sqrt( sqr( phis.old[i] - phis.new[i] ))
+		for(i=0; i< tempObj.old_phis.length; i++){
+			tempObj.old_x[i] = tempObj.old_rs[i] * cos(tempObj.old_phis[i])
+			tempObj.old_y[i] = tempObj.old_rs[i] * sin(tempObj.old_phis[i])
+			tempObj.new_x[i] = tempObj.new_rs[i] * cos(tempObj.new_phis[i])
+			tempObj.new_y[i] = tempObj.new_rs[i] * sin(tempObj.new_phis[i]) 
 		}
-		var delta_phi = phis.change.reduce(add,0)
-		return delta_phi
 		
+		for(i=0; i< tempObj.old_phis.length; i++){
+			tempObj.change[i] = 
+			(
+				Math.sqrt( sqr( tempObj.old_x[i] - tempObj.new_x[i] )) +
+				Math.sqrt( sqr( tempObj.old_y[i] - tempObj.new_y[i] ))
+			)		
+		}
+		var change_sum = tempObj.change.reduce(add,0)
+		console.log('phi: ',phi)
+		console.log('summary stat for x and y changes: ', change_sum)
+		return change_sum
 	}
 	
 	if (flag == 0){
 		var phis = [0, Math.PI/2 ]
 		console.log('Set 2nd phi to 2pi')
+		
 		} else if (flag == 1){
-		var phis = [0]	
 			
+		var phis = [0]	
 		var optimal_2nd_phi = optimize_js(0, 2*Math.PI, phi_change, 0.01)
 		
 		phis.push(optimal_2nd_phi)
@@ -239,7 +267,10 @@ var b = performance.now()
 console.log('One run took: ' + (b-a)/100 + ' ms.')
 console.log('this is result object:')
 console.log(result)
-console.log('flag is: ', flag)
+
+var old_phis = result.phis
+var old_rs = result.rs
+var next_input = []
 
 /// D3 specifications for plotting
 
@@ -359,8 +390,6 @@ g.selectAll("ellipse")
 		.attr("fill", "none")
 		.attr("stroke","gray")
 
-var old_phis = result.phis
-
 // Create scatterplot circles with clickable reordering
 g.selectAll("circle")
     .data(col_row_names)
@@ -376,7 +405,7 @@ g.selectAll("circle")
 			   // update plotdata, calculate new scaling factor
 			   console.log( "You have clicked on point " + d)
 			   
-			   var next_input = d
+			   next_input = d
 			   var new_result = focused_mds(dis, d)
 			   var xy_trans = translate_xy(new_result.xcoords, new_result.ycoords)
 	           var plotdata = createPlotdata(new_result)
