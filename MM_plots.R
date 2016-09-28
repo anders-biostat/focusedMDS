@@ -16,6 +16,10 @@ tab <- tab[ rowSums(is.na(tab)) <= 6, ]
 tab <- tab[ , colSums(is.na(tab)) == 0 ]
 
 dis <- as.matrix( dist( t(tab)) )
+# Send data to JSON format, for use in focused_mds.html implementation
+toJSON(dis)
+toJSON(colnames(dis))
+
 hcl <- hclust(as.dist(dis))
 plot(hcl)
 cutree(hcl,k=5)
@@ -25,7 +29,17 @@ pheatmap( dis, col=rev(cubeHelix(100)), cluster_col=hcl, cluster_row=hcl )
 
 pmap.clust <- as.data.frame(cutree(hcl,k=5))
 
+toJSON(row.names(pmap.clust))
+colors3 <- pmap.clust$`cutree(hcl, k = 5)`
+colors3 <- sapply(colors3, as.character)
 
+colors3[colors3 == "1"] <- "darkorange"
+colors3[colors3 == "2"] <- "darkred"
+colors3[colors3 == "3"] <- "steelblue"
+colors3[colors3 == "4"] <- "darkgreen"
+colors3[colors3 == "5"] <- "gold"
+
+toJSON(colors3)
 
 # Focused MDS function, where the input is the matrix and the point clicked by the user
 
@@ -121,6 +135,7 @@ for (i in 1:nrow(dis)) {
   
   dev.off()
 }
+
 
 ## Comparison to isoMDS function
 dis1 <- dis
