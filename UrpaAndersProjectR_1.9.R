@@ -29,7 +29,7 @@ library(pheatmap)
     #tab <- tab[,!names(tab) %in% c("Entrez")]
     #tab <- t(tab)
     
-## DSS data
+## DSS data (AML data set)
 
 # Correlation coefficients for genes and drugs, calculated over all patients
 
