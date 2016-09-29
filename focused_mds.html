@@ -11,6 +11,19 @@
 	font: 10px sans-serif;
 }
 
+div.tooltip {	
+	position: absolute;			
+    text-align: center;			
+    width: 60px;					
+    height: 28px;					
+    padding: 2px;				
+    font: 12px sans-serif;		
+    background: lightsteelblue;	
+    border: 0px;		
+    border-radius: 8px;			
+    pointer-events: none;	
+   }
+
 
 circle {}	
 
@@ -41,8 +54,6 @@ var col_row_names = ["1668_1","2700_1","2777_1","2790_1","2979_1","3481_1","3497
 // Hey!!! Javascript uses 0 start indexing, not 1 start!!! Don't forget!!!
 
 /// Initializing variables and defining functions
-
-var flag = 0
 
 function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
 	
@@ -112,6 +123,12 @@ function focused_mds(m, focus_point) {
 	var rs = names_dists.map(function(names_dists){
 		return names_dists[1]
 	});
+	
+	var phis = [0, Math.PI/2 ]
+	
+	var xcoords = [0,  rs[1] * cos(phis[1]) ];
+
+	var ycoords = [0,  rs[1] * sin(phis[1]) ];
 		
 	// Define the stress function 
 	
@@ -144,85 +161,11 @@ function focused_mds(m, focus_point) {
 		}
 		return stress;
 	}
-
-	// Define function to optimize second point's phi, such that distance 
-	// from previous phis for each point is minimized
-	
-	function phi_change(phi){
-		var new_phis = [0, phi]
-		
-		var new_point = 2
-		
-		// call distances for new focus_point
-		var rs = dis[col_row_names.indexOf(next_input)];
-		
-		// sort the array by the distances
-		rs.sort(function(a,b)
-		{
-			return a[1] - b[1];
-		});
-
-		while (new_point < obj_by_dist.length) {
-			var stress_res = optimize_js(0, 2*Math.PI, stress, 0.001);
-		
-			new_phis.push(stress_res);
-		
-			new_point = new_point + 1;	
-		}
-		
-		var tempObj = {
-			old_phis: old_phis,
-			old_rs: old_rs,
-			old_x: [],
-			old_y: [],
-			new_phis: new_phis,
-			new_rs: rs ,
-			new_x: [],
-			new_y: [],
-			change: []
-		}
-		
-		for(i=0; i< tempObj.old_phis.length; i++){
-			tempObj.old_x[i] = tempObj.old_rs[i] * cos(tempObj.old_phis[i])
-			tempObj.old_y[i] = tempObj.old_rs[i] * sin(tempObj.old_phis[i])
-			tempObj.new_x[i] = tempObj.new_rs[i] * cos(tempObj.new_phis[i])
-			tempObj.new_y[i] = tempObj.new_rs[i] * sin(tempObj.new_phis[i]) 
-		}
-		
-		for(i=0; i< tempObj.old_phis.length; i++){
-			tempObj.change[i] = 
-			(
-				Math.sqrt( sqr( tempObj.old_x[i] - tempObj.new_x[i] )) +
-				Math.sqrt( sqr( tempObj.old_y[i] - tempObj.new_y[i] ))
-			)		
-		}
-		var change_sum = tempObj.change.reduce(add,0)
-		return change_sum
-	}
-	
-	if (flag == 0){
-		var phis = [0, Math.PI/2 ]
-		console.log('Set 2nd phi to 2pi')
-		
-		} else if (flag == 1){
-			
-		var phis = [0]	
-		var optimal_2nd_phi = optimize_js(0, 2*Math.PI, phi_change, 0.01)
-		
-		phis.push(optimal_2nd_phi)
-		console.log('Set 2nd phi to optimal second phi, ', optimal_2nd_phi)	
-	}
-	
-	var xcoords = [0,  rs[1] * cos(phis[1]) ];
-
-	var ycoords = [0,  rs[1] * sin(phis[1]) ];
 	
 	var new_point = 2;
 	
 	while (new_point < obj_by_dist.length) {
-		var psi = Math.random() *2 * Math.PI
-		console.log(psi)
-		var stress_res = optimize_js(psi, psi + Math.PI*2, stress, 0.001);
+		var stress_res = optimize_js(0, Math.PI*2, stress, 0.001);
 		
 		phis.push(stress_res);
 		xcoords.push( rs[new_point] * cos(phis[new_point]) );
@@ -240,8 +183,6 @@ function focused_mds(m, focus_point) {
 		xcoords: xcoords,
 		ycoords: ycoords
 	};
-	
-	flag = 1
 	
 	return result;
 }
@@ -361,6 +302,12 @@ var text = g.selectAll("text")
 //					 .attr("font-family", "sans-serif")
 //					 .attr("font-size", "12px")
 //					 .attr("fill", "black")
+					 //.style("opacity",0)
+
+// Define the div for the tooltip
+var div = d3.select("body").append("div")	
+        .attr("class", "tooltip")				
+        .style("opacity", 0);
 
 // Create grid ellipses
 var ellipse_coords = {
@@ -386,21 +333,18 @@ g.selectAll("circle")
 		   .attr("cy", function(d,i) {return y(plotdata[d]['y']); })
 		   .attr("r", 6)
            .attr("fill", function(d,i) { return color_object[d]['col']})
-		   .attr("stroke", function(d,i) { return plotdata[d]['stroke']})
+		   .attr("stroke", function(d,i) { return plotdata[d]['stroke']})  
 		   .on( "dblclick", function(d,i) {
 			  
 			   //rerun focused MDS, translate points to center of screen,
 			   // update plotdata, calculate new scaling factor
 			   console.log( "You have clicked on point " + d)
-			   
-			   next_input = d
-			   var new_result = focused_mds(dis, d)
-			   var xy_trans = translate_xy(new_result.xcoords, new_result.ycoords)
-	           var plotdata = createPlotdata(new_result)
-			   var scalefactor = findScaleFactor(new_result)
-			   
-			   result = new_result
-			   old_phis = result.phis
+
+			   result = focused_mds(dis, d)
+			   var xy_trans = translate_xy(result.xcoords, result.ycoords)
+	           var plotdata = createPlotdata(result)
+			   var scalefactor = findScaleFactor(result)
+			   console.log(d, 'result:', result)
 			   
 		       // update scale domains
 		       x.domain([xy_trans.x[0] - scalefactor, xy_trans.x[0] + scalefactor] )
@@ -415,13 +359,30 @@ g.selectAll("circle")
 			       .attr("cy", function(d,i) {return y(plotdata[d]['y']); })
 				   .attr("fill", function(d,i) { return color_object[d]['col']})
 			   	   .attr("stroke", function(d,i) { return plotdata[d]['stroke']})
-		  }
-		  
-		 // .on("mouseover", function(d){
-		//	  var nodeSelection = d3.select(this).style({opacity: '0.8'});
-		//	  nodeSelection.select("text").style({opacity: '1.0'})
-		 // })
-	  );
+			   
+			   //g.selectAll("text")
+			   //    .data(col_row_names)
+			   //    .transition()
+			   //    .duration(3000)
+			   //    .attr('x', function(d) {return x(plotdata[d]['x']); })
+			   //    .attr('y', function(d) {return y(plotdata[d]['y']); })
+			   //    .text(function (d) {return d})
+			   //    .style("opacity",1.0)
+		 	 })
+	  	 	 .on("mouseover", function(d){
+  			     div.transition()
+    		         .duration(200)
+     		  	     .style("opacity",0.9);
+ 			     div.html(d.close)
+			         .style("left", (d3.event.pageX) + "px")
+			         .style("right", (d3.event.pageY - 28) + "px");		  
+		     })
+	         .on("mouseout", function(d){
+ 			     div.transition()
+     		         .duration(500)
+			  	     .style("opacity",0);
+		     })
+		     ;
 
  
 </script>
