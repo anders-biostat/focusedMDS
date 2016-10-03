@@ -11,21 +11,9 @@
 	font: 10px sans-serif;
 }
 
-div.tooltip {	
-	position: absolute;			
-    text-align: center;			
-    width: 60px;					
-    height: 28px;					
-    padding: 2px;				
-    font: 12px sans-serif;		
-    background: lightsteelblue;	
-    border: 0px;		
-    border-radius: 8px;			
-    pointer-events: none;	
-   }
-
-
 circle {}	
+	
+g.svgText{ pointer-events:none}
 
 </style>
 
@@ -288,27 +276,8 @@ var main = chart.append('g')
 
 var g = main.append("svg:g");
 
-// Add svg text element to g
-var text = g.selectAll("text")
-	            .data(col_row_names)
-	            .enter()
-	            .append("text");
+ 
 				
-// Create text labels	
-//var textLabels = text
-//	  	  		     .attr('x', function(d,i) {return x(plotdata[d]['x']); })
-//					 .attr('y', function(d,i) {return y(plotdata[d]['y']); })
-//					 .text( function (d) {return d })
-//					 .attr("font-family", "sans-serif")
-//					 .attr("font-size", "12px")
-//					 .attr("fill", "black")
-					 //.style("opacity",0)
-
-// Define the div for the tooltip
-var div = d3.select("body").append("div")	
-        .attr("class", "tooltip")				
-        .style("opacity", 0);
-
 // Create grid ellipses
 var ellipse_coords = {
 	rx: [50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000],
@@ -360,30 +329,49 @@ g.selectAll("circle")
 				   .attr("fill", function(d,i) { return color_object[d]['col']})
 			   	   .attr("stroke", function(d,i) { return plotdata[d]['stroke']})
 			   
-			   //g.selectAll("text")
-			   //    .data(col_row_names)
-			   //    .transition()
-			   //    .duration(3000)
-			   //    .attr('x', function(d) {return x(plotdata[d]['x']); })
-			   //    .attr('y', function(d) {return y(plotdata[d]['y']); })
-			   //    .text(function (d) {return d})
-			   //    .style("opacity",1.0)
+			   // update text locations
+			   g.selectAll("text")
+			   	   .data(col_row_names)
+			       .transition()
+				   .duration(3000)
+	  	  		   .attr('x', function(d,i) {return x(plotdata[d]['x']); })
+				   .attr('y', function(d,i) {return y(plotdata[d]['y']); })
+				   .text( function (d) {return d })
 		 	 })
-	  	 	 .on("mouseover", function(d){
-  			     div.transition()
-    		         .duration(200)
-     		  	     .style("opacity",0.9);
- 			     div.html(d.close)
-			         .style("left", (d3.event.pageX) + "px")
-			         .style("right", (d3.event.pageY - 28) + "px");		  
+	  	 	// This makes the circles themselves opaque, instead of the associated text
+			 // How to use the CIRCLE mouseover to show the associted text???
+			 // We'll come back to this later.
+			 
+			 .on("mouseover", function(d){
+  			     d3.select("text#X"+d)	 	 
+				     .style("visibility","visible")
 		     })
 	         .on("mouseout", function(d){
- 			     div.transition()
-     		         .duration(500)
-			  	     .style("opacity",0);
+ 			     d3.select("text#X"+d)
+			  	     .style("visibility","hidden")
 		     })
 		     ;
-
+			 
+// Add svg text element to g
+var text = g.selectAll("text")
+	            .data(col_row_names)
+	            .enter()
+	            .append("text")
+			    .attr("id",function(d){return "X"+d;})
+			    .attr("class", "pointlabel");
+				
+// Create text labels	
+var textLabels = text
+	  	  		     .attr('x', function(d,i) {return x(plotdata[d]['x'] + 5) ; })
+					 .attr('y', function(d,i) {return y(plotdata[d]['y']); })
+					 .text( function (d) {return d })
+					 .attr("font-family", "sans-serif")
+					 .attr("font-size", "12px")
+					 .attr("fill", "black")
+					 .style("visibility","hidden")
+				
+		 
+		
  
 </script>
 		  
