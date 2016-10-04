@@ -19,8 +19,7 @@ g.svgText{ pointer-events:none}
 
 <script src="optimize_for_javascript.js" type="text/javascript"></script>
 <script src="https://d3js.org/d3.v4.min.js"></script>
-<script src="bfgs.js" type="text/javascript"></script>
-<script src="numeric.js" type="text/javascript"></script>
+<script src="numeric_and_bfgs.js" type="text/javascript"></script>
 
 
 </head>
@@ -48,8 +47,6 @@ function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
 var cos = Math.cos
 	
 var sin = Math.sin
-
-var focus_input = col_row_names[0]
 
 var abs = Math.abs
 
@@ -85,7 +82,9 @@ var color_object = createColorObject(color_ids);
 
 /// Focused MDS function
 
-function focused_mds(m, focus_point) {
+var focus_point = "1668_1"
+
+//function focused_mds(m, focus_point) {
 
 		
 	// call distances for focus_point
@@ -112,11 +111,11 @@ function focused_mds(m, focus_point) {
 		return names_dists[1]
 	});
 	
-	var phis = [0, Math.PI/2 ]
+	var phis_univ = [0, Math.PI/2 ]
 	
-	var xcoords = [0,  rs[1] * cos(phis[1]) ];
+	var xcoords = [0,  rs[1] * cos(phis_univ[1]) ];
 
-	var ycoords = [0,  rs[1] * sin(phis[1]) ];
+	var ycoords = [0,  rs[1] * sin(phis_univ[1]) ];
 		
 	// Define the stress function 
 	
@@ -155,25 +154,108 @@ function focused_mds(m, focus_point) {
 	while (new_point < obj_by_dist.length) {
 		var stress_res = optimize_js(0, Math.PI*2, stress, 0.001);
 		
-		phis.push(stress_res);
-		xcoords.push( rs[new_point] * cos(phis[new_point]) );
-		ycoords.push( rs[new_point] * sin(phis[new_point]) );
+		phis_univ.push(stress_res);
+		xcoords.push( rs[new_point] * cos(phis_univ[new_point]) );
+		ycoords.push( rs[new_point] * sin(phis_univ[new_point]) );
 		
 		new_point = new_point + 1;	
 	}
 	
-	var colors = color_object
+	// Use the result of this one-dimensional optimization as a guess 
+	// for the bfgs multivariate optimization
 	
+	// create indexable object with ids and x, y coordinates, r and phis_univ
+	var coords = {};
+	for(var i=0; i< xcoords.length; i++) {
+		coords[obj_by_dist[i]] = {
+			x: xcoords[i],
+			y: ycoords[i],
+			r: rs[i],
+			phi: phis_univ[i]
+		}
+	};
+	
+	// Define a stress function thats input is an array, rather than a number
+	
+	function stress2(phis_univ) {
+		
+		// Compare each cell in the dis matrix with the distance of those points given by the 
+		// x and y coordinates, and sum to get stress
+		var stress = 0;
+		
+		for(var i=0; i< col_row_names.length; i++) {
+	
+			var stress_inner = 0;
+			for (var j=0; j < col_row_names.length; j++){
+				// sqr(dij - Dij), where dij is the distance in the dis matrix, given
+				// and Dij is the actual 2D distance at the given phis, and is 
+				// Dij = sqrt( sqr( xi-xj) + sqr( yi-yj))
+				var Dij = (Math.sqrt( sqr(coords[col_row_names[i]].x - coords[col_row_names[j]].x) 
+				+ sqr(coords[col_row_names[i]].y - coords[col_row_names[j]].y) ));
+				
+				var stress_inner = stress_inner + sqr(dis[i][j] - Dij );
+			};	
+			var stress = stress + stress_inner;
+		};
+		return stress;		
+	};
+	
+	var stress_multi = stress2(phis_univ)
+	
+	// define the gradient function, the derivative of the stress function in stress/stress2
+	
+	//function gradient(phis_univ){
+		
+		var stress_deriv = 0;
+		for(var i=0; i< col_row_names.length; i++) {
+			
+			var stressd_inner = 0;
+			for (var j=0; j < col_row_names.length; j++){
+				
+				var Dij = (Math.sqrt( sqr(coords[col_row_names[i]].x - coords[col_row_names[j]].x) 
+				+ sqr(coords[col_row_names[i]].y - coords[col_row_names[j]].y) ));
+				
+				var ri = coords[col_row_names[i]].r
+				
+				var rj = coords[col_row_names[j]].r
+				
+				var phi_i = coords[col_row_names[i]].phi
+				
+				var phi_j = coords[col_row_names[j]].phi
+				
+				var stressd_inner = stressd_inner + 2 *(dis[i][j] - Dij) * ( (ri*rj*sin(phi_j - phi_i)) / 
+														Math.sqrt( sqr(ri) - 2*ri*rj*cos(phi_j - phi_i) + sqr(rj)) )
+				console.log(stressd_inner)
+			};
+			
+			var stress_deriv = stress_deriv + stressd_inner
+		};
+		console.log(stress_deriv)
+		stress_deriv = stress_deriv * -1
+		
+		//return stress_deriv;	
+		//};
+	
+	var stress_multi_deriv = gradient(phis_univ)
+	
+	console.log(stress_multi)
+	console.log(stress_multi_deriv)
+	
+	
+	
+	
+	var colors = color_object
+
 	var result = {
 		obj_by_dist: obj_by_dist,
 		rs: rs,
-		phis: phis,
+		phis: phis_univ,
 		xcoords: xcoords,
 		ycoords: ycoords
-	};
+	}
 	
-	return result;
-}
+	//return result;
+	//}
 
 var a = performance.now()
 
@@ -334,9 +416,10 @@ g.selectAll("circle")
 			   	   .data(col_row_names)
 			       .transition()
 				   .duration(3000)
-	  	  		   .attr('x', function(d,i) {return x(plotdata[d]['x']); })
+	  	  		   .attr('x', function(d,i) {return x(plotdata[d]['x'] + 3); })
 				   .attr('y', function(d,i) {return y(plotdata[d]['y']); })
 				   .text( function (d) {return d })
+			   
 		 	 })
 	  	 	// This makes the circles themselves opaque, instead of the associated text
 			 // How to use the CIRCLE mouseover to show the associted text???
@@ -362,7 +445,7 @@ var text = g.selectAll("text")
 				
 // Create text labels	
 var textLabels = text
-	  	  		     .attr('x', function(d,i) {return x(plotdata[d]['x'] + 5) ; })
+	  	  		     .attr('x', function(d,i) {return x(plotdata[d]['x'] + 3) ; })
 					 .attr('y', function(d,i) {return y(plotdata[d]['y']); })
 					 .text( function (d) {return d })
 					 .attr("font-family", "sans-serif")
