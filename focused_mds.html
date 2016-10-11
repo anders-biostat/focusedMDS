@@ -77,14 +77,9 @@ function createColorObject(color_ids){
 
 var color_object = createColorObject(color_ids);
 
-// Starting focus point, by convention the first in the list
-var focus_input = col_row_names[0]
-
 // Focused MDS function
 
 function focused_mds(m, focus_point) {
-
-		
 	// call distances for focus_point
 	var dists = dis[col_row_names.indexOf(focus_point)];
 	
@@ -94,45 +89,42 @@ function focused_mds(m, focus_point) {
 	});
 	
 	// sort the array by the distances
-	names_dists.sort(function(a,b)
-	{
+	names_dists.sort(function(a,b){
 		return a[1] - b[1];
 	});
 	
-	// array of names, ordered by distance to focus
-	var obj_by_dist = names_dists.map(function(names_dists){
-		return names_dists[0]
-	});
+	// return index of names in distance from focus point 
+	var names = [];
+	for (i in names_dists){ names.push(names_dists[i][0]); };
 	
-	// array of r distances to focus, ordered by distance to focus
-	var rs = names_dists.map(function(names_dists){
-		return names_dists[1]
-	});
+	// create an indexable object from these sorted ids and distances
+	var sorted_object = {};
+	for(var i=0; i< col_row_names.length; i++) {
+		sorted_object[names_dists[i][0]] = {
+			r: names_dists[i][1],
+			phi: [],
+			x: [],
+			y: []
+		}
+	};
 	
-	var phis_univ = [0, Math.PI/2 ]
-	
-	var xcoords = [0,  rs[1] * cos(phis_univ[1]) ];
-
-	var ycoords = [0,  rs[1] * sin(phis_univ[1]) ];
-		
 	// Define the stress function 
 	
 	function stress(phi) {
 		var stress = 0;
-		var j = 0;       //the iteration variable
-	
+		var new_point=i;
 		//position of the new point, given the candidate phi
-		var xnew = rs[new_point] * cos(phi);
-		var ynew = rs[new_point] * sin(phi);
+		var xnew = sorted_object[names[new_point]].r * cos(phi);
+		var ynew = sorted_object[names[new_point]].r * sin(phi);
 	
-		while (j < new_point ) {
+		for(j=0; j < new_point; j++ ) {
 			//position of the point we are comparing to new point
-			var xj = xcoords[j];
-			var yj = ycoords[j];
+			var xj = sorted_object[names[j]].x;
+			var yj = sorted_object[names[j]].y;
 		
 			//index of column names of matrix, in ORIGINAL order
-			var dij_col = col_row_names.indexOf(obj_by_dist[new_point]);
-			var dij_row = col_row_names.indexOf(obj_by_dist[j]);
+			var dij_col = col_row_names.indexOf(names[new_point]);
+			var dij_row = col_row_names.indexOf(names[j]);
 		
 			// actual distance given by dis matrix
 			var dij = dis[dij_col][dij_row];
@@ -141,168 +133,110 @@ function focused_mds(m, focus_point) {
 			var Dij = Math.sqrt( sqr((xnew - xj)) + sqr((ynew - yj)) );
 		
 			var stress = stress + sqr( (dij - Dij));
-		
-			var j = j + 1;
-		}
+		};
 		return stress;
-	}
-	
-	var new_point = 2;
-	
-	while (new_point < obj_by_dist.length) {
-		var stress_res = optimize_js(0, Math.PI*2, stress, 0.001);
-		
-		phis_univ.push(stress_res);
-		xcoords.push( rs[new_point] * cos(phis_univ[new_point]) );
-		ycoords.push( rs[new_point] * sin(phis_univ[new_point]) );
-		
-		new_point = new_point + 1;	
-	}
-	
-	// Use the result of this one-dimensional optimization as a guess 
-	// for the bfgs multivariate optimization
-	
-	// create indexable object with ids and x, y coordinates, r and phis_univ
-	var coords = {};
-	for(var i=0; i< xcoords.length; i++) {
-		coords[obj_by_dist[i]] = {
-			x: xcoords[i],
-			y: ycoords[i],
-			r: rs[i],
-			phi: phis_univ[i]
-		}
 	};
 	
-	// Define a stress function thats input is an array, rather than a number
+	// setting phi, xy coords, and colors for first two points
+	sorted_object[names[0]].phi = 0;
+	sorted_object[names[0]].x = 0;
+	sorted_object[names[0]].y = 0;
+
+	sorted_object[names[1]].phi = Math.PI/2;
+	sorted_object[names[1]].x = sorted_object[names[1]].r * cos(sorted_object[names[1]].phi);
+	sorted_object[names[1]].y = sorted_object[names[1]].r * sin(sorted_object[names[1]].phi);
 	
-	function stress2(phis) {
-		//console.log("calling objective function", phis[5])
-		// Compare each cell in the dis matrix with the distance of those points given by the 
-		// x and y coordinates, and sum to get stress
-		var stress = 0;
+	// using univariate optimization to calculate the rest
+	for(var i = 2; i < names.length; i++) {
+			sorted_object[names[i]].phi = optimize_js(0, Math.PI*2, stress, 0.001);
 		
-		for(var i=0; i< phis.length; i++) {
-	
-			var stress_inner = 0;
-			for (var j=i+1; j < phis.length; j++){
-				// sqr(dij - Dij), where dij is the distance in the dis matrix, given
-				// and Dij is the actual 2D distance at the given phis, and is 
-				// Dij = sqrt( sqr( xi-xj) + sqr( yi-yj))
-				
-				// These need to be in terms of phi and r, and these phis come from the PHI vector, not the initial guess PHI_UNIV!!!
-				var ri = coords[col_row_names[i]].r;
-				
-				var rj = coords[col_row_names[j]].r;
-				
-				var phi_i = phis[i];
-				
-				var phi_j = phis[j];
-				
-				var Dij = Math.sqrt( sqr(ri*cos(phi_i) - rj*cos(phi_j)) + sqr(ri*sin(phi_i) - rj*sin(phi_j)) )
-				
-				//console.log("i:", i, "j:", j, "dis variable", dis[i][j]);
-				
-				var stress_inner = stress_inner + sqr(dis[i][j] - Dij );
-			};	
-			var stress = stress + stress_inner;
-		};
-		//console.log("called objective function.","stress is;",stress)
-		return stress;		
+			sorted_object[names[i]].x = sorted_object[names[i]].r * cos(sorted_object[names[i]].phi);
+			sorted_object[names[i]].y = sorted_object[names[i]].r * sin(sorted_object[names[i]].phi);
 	};
 	
-	var stress_multi = stress2(phis_univ)
-	
-	// define the gradient function, the derivative of the stress function in stress/stress2
-	
-	function gradient(phis){
-		//console.log("calling gradient", phis[5])
-		var stress_derivative = [];
-		
-		for(var i=0; i< phis.length; i++) {
+	return sorted_object;
+};
+
+
+// Define a stress function whose input is an array, rather than a number
+
+function stress_multi(phis) {
+	if(result_univ == undefined) throw "univariate optimization not run yet!";
+	var stress = 0;
+	for(var i=0; i< phis.length; i++) {
+
+		for (var j=i+1; j < phis.length; j++){
+
+			var ri = result_univ[col_row_names[i]].r;
 			
-			var stressd_inner = 0;
-			for (var j=0; j < phis.length; j++){
-				
-				if (i==j){ continue; }
-				
-				var ri = coords[col_row_names[i]].r;
-				
-				var rj = coords[col_row_names[j]].r;
-				
-				var phi_i = phis[i];
-				
-				var phi_j = phis[j];
-				
-				var Dij = Math.sqrt( sqr(ri*cos(phi_i) - rj*cos(phi_j)) + sqr(ri*sin(phi_i) - rj*sin(phi_j)) )
-				
-				var Sij = dis[i][j] - Dij
-				
-				var  stressd_inner = stressd_inner +
-				( 2*ri*rj*sin(phi_j - phi_i) * Sij) / Dij 
-		
-			};
-			stress_derivative.push( stressd_inner );
-		};
-		//console.log("called gradient.","derivative is:", stress_derivative)
-		return stress_derivative;	
+			var rj = result_univ[col_row_names[j]].r;
+			
+			var phi_i = phis[i];
+			
+			var phi_j = phis[j];
+			
+			var Dij = Math.sqrt( sqr(ri*cos(phi_i) - rj*cos(phi_j)) + sqr(ri*sin(phi_i) - rj*sin(phi_j)) )
+			
+			var stress = stress + sqr(dis[i][j] - Dij );
+		};	
 	};
-	
-	//OK, let's test this dang derivative
-	// If we take the sum of the function results at all phis phi_1 to phi_n, and add for example to
-	// phi_3  a small number h like 0.001, subtract the sum of the function results at all phi 1 to n, 
-	// and divide by h, it should be relatively close to the result of the gradient f (phi 1 to n) at 3
-	var h = 0.0001
-	var phis_test = phis_univ.slice();
-	// Analytical or exact gradient- calculated through symbolic differentiation
-	var graD = gradient( phis_test )
-	
-	for( var j = 0; j < phis_test.length; j++ ) {
-		var phis_test_plus_h = phis_test.slice();
-		phis_test_plus_h[j] += h;
-		// Numeric gradient- inexact, estimate
-	    var derivN = ( stress2( phis_test_plus_h ) - stress2( phis_test ) ) / h
-	    //console.log(j, derivN, graD[j],( derivN - graD[j] ) / derivN)
-	}
+	//console.log("called objective function.","stress is;",stress)
+	return stress;		
+};
 
-	var optimizable = {
-		getValue: stress2,
-		getGradient: gradient
-	}
-	
-	var a = performance.now()
-	var phis = bfgs(phis_univ, {f:stress2, df:gradient},1000, 1, {maxTry: 200})
-	// method: limitedMemoryBFGS(optimizable, parameters)
-	//var phis = limitedMemoryBFGS(optimizable, phis_univ);
-	
-	var b = performance.now()
-	
-	console.log("multivariate optimization took", b - a, "ms")
-	
-	var colors = color_object
+// define the gradient function, the derivative of the stress function in stress/stress_multi
 
-	var result = {
-		obj_by_dist: obj_by_dist,
-		rs: rs,
-		phis: phis,
-		xcoords: xcoords,
-		ycoords: ycoords
-	}
-	return result;
-}
+function gradient(phis){
 
-console.log('Univariate optimization took: ' + (b-a)/100 + ' ms.')
-console.log('this is result object:',result)
+	var stress_derivative = [];
+	
+	for(var i=0; i< phis.length; i++) {
+		
+		var stressd_inner = 0;
+		for (var j=0; j < phis.length; j++){
+			
+			if (i==j){ continue; }
+			
+			var ri = result_univ[col_row_names[i]].r;
+			
+			var rj = result_univ[col_row_names[j]].r;
+			
+			var phi_i = phis[i];
+			
+			var phi_j = phis[j];
+			
+			var Dij = Math.sqrt( sqr(ri*cos(phi_i) - rj*cos(phi_j)) + sqr(ri*sin(phi_i) - rj*sin(phi_j)) )
+			
+			var Sij = dis[i][j] - Dij
+			
+			var  stressd_inner = stressd_inner +
+			( 2*ri*rj*sin(phi_j - phi_i) * Sij) / Dij 
+	
+		};
+		stress_derivative.push( stressd_inner );
+	};
+	//console.log("called gradient.","derivative is:", stress_derivative)
+	return stress_derivative;	
+};
 
 var a = performance.now()
-
-var result = focused_mds(dis, focus_input)
-
+var result_univ = focused_mds(dis, col_row_names[0])
 var b = performance.now()
 
-function mulivariat_opt(phis_univ){
-	
+console.log('Univariate optimization took: ', b-a , ' ms.')
+console.log('this is result_univ object:',result_univ)
+
+var phis_univ = [];
+for(i in result_univ){
+	phis_univ.push(result_univ[i].phi);
 }
 
+var c = performance.now()
+var result_multi = bfgs(phis_univ, {f:stress_multi, df:gradient},1000, 1, {maxTry: 200})
+var d = performance.now()
+
+console.log('Multivariate optimization took: ', d - c, ' ms.')
+console.log('This is the result_multi object:', result_multi)
 
 /// D3 specifications for plotting
 
@@ -318,47 +252,19 @@ for (i=0;i< (col_row_names.length - 1) ;i++) {
 	stroke_colors.push("");
 }
 
-// Translate the x and y coordinates to the center of the browser
-function translate_xy(xcoords, ycoords){
-	var xcoords_trans = [];
-	for(var i=0; i < xcoords.length; i++){
-		xcoords_trans.push(xcoords[i] + width/2)
-	};
-	
-	var ycoords_trans = [];
-	for (var i=0; i < ycoords.length; i++){
-		ycoords_trans.push(ycoords[i] + height/2)
-	};
-	
-	var xy_trans = {
-		x: xcoords_trans,
-		y: ycoords_trans
-	};
-	return xy_trans
-}
+// What we want to do now is 
+// 1. figure out what the max distance is from the center coordinate to any x or y coordinate (absolute)
+// and set that to the min AND max for the x and y scale domains
+// 2. translate the focus point to the center of the page
 
-var xy_trans = translate_xy(result.xcoords, result.ycoords)
-
-// Create object containing data needed for plot
-function createPlotdata(result) {
-	var plotdata = {};
-	for(var i=0; i < result.obj_by_dist.length; i++) {
-		plotdata[result.obj_by_dist[i]] = {
-			x: xy_trans.x[i],
-			y: xy_trans.y[i],
-			stroke: stroke_colors[i]
-		}
-	};
-	return plotdata;
-};
-
-var plotdata = createPlotdata(result);
-
-// Create a scale factor to be used in scaleLinear functions
+// Find max x or y coordinate (aka scale factor)
 function findScaleFactor(result) {
-	var max_x = d3.max(result.xcoords, function(d) {return abs(d); })
-	var max_y = d3.max(result.ycoords, function(d) {return abs(d); })
-	
+	var xarray = [];
+	for(i in result_univ) { xarray.push(result_univ[i].x) };
+	var yarray = [];
+	for(i in result_univ) { yarray.push(result_univ[i].y) };
+	var max_x = d3.max(xarray, function(d) {return abs(d); })
+	var max_y = d3.max(yarray, function(d) {return abs(d); })
 	if( max_x > max_y) {
 		var scalefactor = max_x
 	} else {var scalefactor = max_y}
@@ -366,16 +272,42 @@ function findScaleFactor(result) {
 	return scalefactor
 }
 
-var scalefactor = findScaleFactor(result)
+		
+		// Translate the x and y coordinates to the center of the browser
+		function translate_xy(xcoords, ycoords){
+			var xcoords_trans = [];
+			for(var i=0; i < xcoords.length; i++){
+				xcoords_trans.push(xcoords[i] + width/2)
+			};
+	
+			var ycoords_trans = [];
+			for (var i=0; i < ycoords.length; i++){
+				ycoords_trans.push(ycoords[i] + height/2)
+			};
+	
+			var xy_trans = {
+				x: xcoords_trans,
+				y: ycoords_trans
+			};
+			return xy_trans
+		}
 
-// Create scaling factors
-var x = d3.scaleLinear()
-          .domain([xy_trans.x[0] - scalefactor, xy_trans.x[0] + scalefactor] )
-          .range([0, width]);
+		var xy_trans = translate_xy(result.xcoords, result.ycoords)
 
-var y = d3.scaleLinear()
-		  .domain([xy_trans.x[0] - scalefactor, xy_trans.x[0] + scalefactor] )
-		  .range([ height, 0]);
+
+		// Create a scale factor to be used in scaleLinear functions
+		
+
+		var scalefactor = findScaleFactor(result)
+
+		// Create scaling factors
+		var x = d3.scaleLinear()
+		          .domain([xy_trans.x[0] - scalefactor, xy_trans.x[0] + scalefactor] )
+		          .range([0, width]);
+
+		var y = d3.scaleLinear()
+				  .domain([xy_trans.x[0] - scalefactor, xy_trans.x[0] + scalefactor] )
+				  .range([ height, 0]);
 
 var chart = d3.select('body')
 	 .append('svg:svg')
@@ -402,8 +334,8 @@ var ellipse_coords = {
 g.selectAll("ellipse")
     .data(col_row_names)
 	.enter().append("ellipse")
-	    .attr("cx", function(d) {return (plotdata[focus_input]['x']); })
-        .attr("cy", function(d) {return (plotdata[focus_input]['y']); })
+	    .attr("cx", function(d) {return (result_univ[col_row_names[0]]['x'] ); })
+        .attr("cy", function(d) {return (result_univ[col_row_names[0]]['y'] ); })
         .attr("rx", function(d,i) {return ( ellipse_coords['rx'][i]); })
         .attr("ry", function(d,i) {return ( ellipse_coords['ry'][i]); })
 		.attr("fill", "none")
@@ -413,22 +345,21 @@ g.selectAll("ellipse")
 g.selectAll("circle")
     .data(col_row_names)
     .enter().append("circle")
-		   .attr("cx", function(d,i) {return x(plotdata[d]['x']); })
-		   .attr("cy", function(d,i) {return y(plotdata[d]['y']); })
+		   .attr("cx", function(d,i) {return x(result_univ[d]['x']); })
+		   .attr("cy", function(d,i) {return y(result_univ[d]['y']); })
 		   .attr("r", 6)
            .attr("fill", function(d,i) { return color_object[d]['col']})
-		   .attr("stroke", function(d,i) { return plotdata[d]['stroke']})  
+		   .attr("stroke", function(d,i) { return result_univ[d]['stroke']})  
 		   .on( "dblclick", function(d,i) {
 			  
 			   //rerun focused MDS, translate points to center of screen,
 			   // update plotdata, calculate new scaling factor
 			   console.log( "You have clicked on point " + d)
 
-			   result = focused_mds(dis, d)
-			   var xy_trans = translate_xy(result.xcoords, result.ycoords)
-	           var plotdata = createPlotdata(result)
-			   var scalefactor = findScaleFactor(result)
-			   console.log(d, 'result:', result)
+			   result_univ = focused_mds(dis, d)
+			   		//var xy_trans = translate_xy(result.xcoords, result.ycoords)
+	           		//var scalefactor = findScaleFactor(result)
+			   console.log(d, 'result_univ:', result_univ)
 			   
 		       // update scale domains
 		       x.domain([xy_trans.x[0] - scalefactor, xy_trans.x[0] + scalefactor] )
@@ -439,24 +370,21 @@ g.selectAll("circle")
 			       .data(col_row_names)
 			       .transition()
 			       .duration(3000)
-			   	   .attr("cx", function(d,i) {return x(plotdata[d]['x']); })
-			       .attr("cy", function(d,i) {return y(plotdata[d]['y']); })
+			   	   .attr("cx", function(d,i) {return x(result_univ[d]['x']); })
+			       .attr("cy", function(d,i) {return y(result_univ[d]['y']); })
 				   .attr("fill", function(d,i) { return color_object[d]['col']})
-			   	   .attr("stroke", function(d,i) { return plotdata[d]['stroke']})
+			   	   .attr("stroke", function(d,i) { return result_univ[d]['stroke']})
 			   
 			   // update text locations
 			   g.selectAll("text")
 			   	   .data(col_row_names)
 			       .transition()
 				   .duration(3000)
-	  	  		   .attr('x', function(d,i) {return x(plotdata[d]['x'] + 3); })
-				   .attr('y', function(d,i) {return y(plotdata[d]['y']); })
+	  	  		   .attr('x', function(d,i) {return x(result_univ[d]['x'] + 3); })
+				   .attr('y', function(d,i) {return y(result_univ[d]['y']); })
 				   .text( function (d) {return d })
 			   
 		 	 })
-	  	 	// This makes the circles themselves opaque, instead of the associated text
-			 // How to use the CIRCLE mouseover to show the associted text???
-			 // We'll come back to this later.
 			 
 			 .on("mouseover", function(d){
   			     d3.select("text#X"+d)	 	 
@@ -478,8 +406,8 @@ var text = g.selectAll("text")
 				
 // Create text labels	
 var textLabels = text
-	  	  		     .attr('x', function(d,i) {return x(plotdata[d]['x'] + 3) ; })
-					 .attr('y', function(d,i) {return y(plotdata[d]['y']); })
+	  	  		     .attr('x', function(d,i) {return x(result_univ[d]['x'] + 3) ; })
+					 .attr('y', function(d,i) {return y(result_univ[d]['y']); })
 					 .text( function (d) {return d })
 					 .attr("font-family", "sans-serif")
 					 .attr("font-size", "12px")
