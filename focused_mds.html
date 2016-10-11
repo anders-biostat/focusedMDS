@@ -290,18 +290,19 @@ function focused_mds(m, focus_point) {
 	return result;
 }
 
+console.log('Univariate optimization took: ' + (b-a)/100 + ' ms.')
+console.log('this is result object:',result)
+
 var a = performance.now()
 
 var result = focused_mds(dis, focus_input)
 
 var b = performance.now()
 
-console.log('One run took: ' + (b-a)/100 + ' ms.')
-console.log('this is result object:',result)
+function mulivariat_opt(phis_univ){
+	
+}
 
-var old_phis = result.phis
-var old_rs = result.rs
-var next_input = []
 
 /// D3 specifications for plotting
 
