@@ -20,6 +20,10 @@ g.svgText{ pointer-events:none}
 <script src="optimize_for_javascript.js" type="text/javascript"></script>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="numeric_and_bfgs.js" type="text/javascript"></script>
+<script type="text/javascript" src="d3.v3.min.js"></script>
+<script type="text/javascript" src="numeric-1.2.6.min.js"></script>
+<script type="text/javascript" src="xregexp-all-min.js"></script>
+<script type="text/javascript" src="lbfgs.js"></script>
 
 
 </head>
@@ -82,7 +86,9 @@ var color_object = createColorObject(color_ids);
 
 /// Focused MDS function
 
-var focus_point = "1668_1"
+var focus_input = col_row_names[0]
+
+var focus_point = "2700_1"
 
 //function focused_mds(m, focus_point) {
 
@@ -177,26 +183,38 @@ var focus_point = "1668_1"
 	
 	// Define a stress function thats input is an array, rather than a number
 	
-	function stress2(phis_univ) {
-		
+	function stress2(phis) {
+		//console.log("calling objective function", phis[5])
 		// Compare each cell in the dis matrix with the distance of those points given by the 
 		// x and y coordinates, and sum to get stress
 		var stress = 0;
 		
-		for(var i=0; i< col_row_names.length; i++) {
+		for(var i=0; i< phis.length - 1; i++) {
 	
 			var stress_inner = 0;
-			for (var j=0; j < col_row_names.length; j++){
+			for (var j=0; j < phis.length - 1; j++){
 				// sqr(dij - Dij), where dij is the distance in the dis matrix, given
 				// and Dij is the actual 2D distance at the given phis, and is 
 				// Dij = sqrt( sqr( xi-xj) + sqr( yi-yj))
-				var Dij = (Math.sqrt( sqr(coords[col_row_names[i]].x - coords[col_row_names[j]].x) 
-				+ sqr(coords[col_row_names[i]].y - coords[col_row_names[j]].y) ));
+				
+				// These need to be in terms of phi and r, and these phis come from the PHI vector, not the initial guess PHI_UNIV!!!
+				var ri = coords[col_row_names[i]].r;
+				
+				var rj = coords[col_row_names[j]].r;
+				
+				var phi_i = phis[i];
+				
+				var phi_j = phis[j];
+				
+				var Dij = Math.sqrt( sqr(ri*cos(phi_i) - rj*cos(phi_j)) + sqr(ri*sin(phi_i) - rj*sin(phi_j)) )
+				
+				//console.log("i:", i, "j:", j, "dis variable", dis[i][j]);
 				
 				var stress_inner = stress_inner + sqr(dis[i][j] - Dij );
 			};	
 			var stress = stress + stress_inner;
 		};
+		//console.log("called objective function.","stress is;",stress)
 		return stress;		
 	};
 	
@@ -204,45 +222,94 @@ var focus_point = "1668_1"
 	
 	// define the gradient function, the derivative of the stress function in stress/stress2
 	
-	//function gradient(phis_univ){
+	function gradient(phis){
+		//console.log("calling gradient", phis[5])
+		var stress_derivative = [];
 		
-		var stress_deriv = 0;
-		for(var i=0; i< col_row_names.length; i++) {
+		for(var i=0; i< phis.length; i++) {
 			
 			var stressd_inner = 0;
-			for (var j=0; j < col_row_names.length; j++){
+			for (var j=0; j < phis.length; j++){
 				
-				var Dij = (Math.sqrt( sqr(coords[col_row_names[i]].x - coords[col_row_names[j]].x) 
-				+ sqr(coords[col_row_names[i]].y - coords[col_row_names[j]].y) ));
+				if (i==j){ continue; }
 				
-				var ri = coords[col_row_names[i]].r
+				var ri = coords[col_row_names[i]].r;
 				
-				var rj = coords[col_row_names[j]].r
+				var rj = coords[col_row_names[j]].r;
 				
-				var phi_i = coords[col_row_names[i]].phi
+				var phi_i = phis[i];
 				
-				var phi_j = coords[col_row_names[j]].phi
+				var phi_j = phis[j];
 				
-				var stressd_inner = stressd_inner + 2 *(dis[i][j] - Dij) * ( (ri*rj*sin(phi_j - phi_i)) / 
-														Math.sqrt( sqr(ri) - 2*ri*rj*cos(phi_j - phi_i) + sqr(rj)) )
-				console.log(stressd_inner)
+				var Dij = Math.sqrt( sqr(ri*cos(phi_i) - rj*cos(phi_j)) + sqr(ri*sin(phi_i) - rj*sin(phi_j)) )
+				
+				var Sij = dis[i][j] - Dij
+				
+				var  stressd_inner = stressd_inner +
+				( 2*ri*rj*sin(phi_i - phi_j) * Sij) / Dij
+				
+				//simplified solution from Simon
+				//Sij/Dij * ri*rj * sin(phi_i - phi_j)
+				
+				// simplified solution from Wolfram
+				//2*ri*rj*sin(phi_i - phi_j)* 
+				//(1 - ( dis[i][j] / Math.sqrt(sqr(ri) - 2*ri*rj*cos(phi_i - phi_j) + sqr(rj) ) ))
+				
+				// manual solution
+				//-1*((2*ri*cos(phi_i)*(ri*sin(phi_i) - rj*sin(phi_j)) - 2*ri*sin(phi_i)*(ri*cos(phi_i) - rj*cos(phi_j))))*
+				//(dis[i][j] - Math.sqrt(sqr(ri*sin(phi_i) - rj*sin(phi_j)) + sqr(ri*cos(phi_i) - rj*cos(phi_j)) ) ) /
+				//(  Math.sqrt( sqr(ri*sin(phi_i) - rj*sin(phi_j)) - sqr(ri*cos(phi_i) - rj*cos(phi_j)) ));	
 			};
-			
-			var stress_deriv = stress_deriv + stressd_inner
+			stress_derivative.push( stressd_inner );
 		};
-		console.log(stress_deriv)
-		stress_deriv = stress_deriv * -1
+		console.log("called gradient.","derivative is:", stress_derivative)
+		return stress_derivative;	
+	};
+	
+	//OK, let's test this dang derivative
+	// If we take the sum of the function results at all phis phi_1 to phi_n, and add for example to
+	// phi_3  a small number h like 0.001, subtract the sum of the function results at all phi 1 to n, 
+	// and divide by h, it should be relatively close to the result of the gradient f (phi 1 to n) at 3
+	var h = 0.0001
+	var phis_test = phis_univ.slice();
+	// Analytical or exact gradient- calculated through symbolic differentiation
+	var graD = gradient( phis_test )
+	
+	for( var j = 0; j < phis_test.length; j++ ) {
+		var phis_test_plus_h = phis_test.slice();
+		phis_test_plus_h[j] += h;
+		// Numeric gradient- inexact, estimate
+	    var derivN = ( stress2( phis_test_plus_h ) - stress2( phis_test ) ) / h
+	    console.log(j, derivN, graD[j],( derivN - graD[j] ) / abs(derivN))
+	}
+	
 		
-		//return stress_deriv;	
-		//};
+    // eps is approximately the square root of the relative machine
+    // precision.
+	var eps = 1.0;
+	var tol1 = 1.0 + eps;
+	while (tol1 > 1.0){
+		eps = eps/2.0;
+		tol1 = 1.0 + eps;
+	}
+	eps = Math.sqrt(eps);
 	
-	var stress_multi_deriv = gradient(phis_univ)
+	var optimizable = {
+		getValue: stress2,
+		getGradient: gradient
+	}
 	
-	console.log(stress_multi)
-	console.log(stress_multi_deriv)
+	var a = performance.now()
+	//var phis = bfgs(phis_univ, {f:stress2, df:gradient},1000, eps)
+	// method: limitedMemoryBFGS(optimizable, parameters)
+	//var phis = limitedMemoryBFGS(optimizable, phis_univ);
 	
+	var b = performance.now()
 	
+	console.log(phis)
 	
+	console.log("multiv optimized phis:", phis)
+	console.log("multivariate optimization took ", (b-a),"ms")
 	
 	var colors = color_object
 
@@ -253,7 +320,6 @@ var focus_point = "1668_1"
 		xcoords: xcoords,
 		ycoords: ycoords
 	}
-	
 	//return result;
 	//}
 
@@ -264,8 +330,7 @@ var result = focused_mds(dis, focus_input)
 var b = performance.now()
 
 console.log('One run took: ' + (b-a)/100 + ' ms.')
-console.log('this is result object:')
-console.log(result)
+console.log('this is result object:',result)
 
 var old_phis = result.phis
 var old_rs = result.rs
