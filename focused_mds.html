@@ -243,13 +243,66 @@ function updateWithMulti() {
 	}
 
 	var c = performance.now()
-	var result_multi = bfgs(phis_univ, {f:stress_multi, df:gradient},1000, 1, {maxTry: 200})
+	var bfgs_result = bfgs(phis_univ, {f:stress_multi, df:gradient},1000, 1, {maxTry: 200})
 	var d = performance.now()
 	console.log('Multivariate optimization took: ', d - c, ' ms.')
-	console.log('This is the result_multi object:', result_multi)
+	console.log('This is the bfgs_result object:', bfgs_result)
+	
+	// The output of the BFGS are the phis in the same order as given in phis_univ, which are
+	// in the same order as the result_univ file. Turn this into an indexable object for use below.
+	
+	var multi_phis = 
+	
+	// create result_multi using optimized phis, given rs, and recalculating xy coords
+	var result_multi = {
+		col_row_names[i] = {
+			r: [],
+			phi: [],
+			x: [],
+			y: []
+		}
+	}
 	
 	
+	for(i in result_multi) {
+		result_multi[col_row_names[i]].r = result_univ[col_row_names[i]].r ;
+		result_multi[col_row_names[i]].phi = 
+	}
 	
+	for(i in result_multi){
+		result_multi[i].phi = multi_phis.x[i];
+		result_multi[i].x = result_multi[i].r * cos(result_multi[i.phi]);
+		result_multi[i].y = result_multi[i].r * sin(result_multi[i.phi]);
+	}
+	
+	console.log("multi",result_multi)
+	console.log("original result_univ", result_univ)
+	
+    maxDistance = findMaxDistance(result_multi)
+
+    // update scale domains
+    x.domain([-1*maxDistance, maxDistance])
+    y.domain([-1*maxDistance, maxDistance])
+	      
+    // update all circles
+    g.selectAll("circle")
+       .data(col_row_names)
+       .transition()
+       .duration(3000)
+   	   .attr("cx", function(d,i) {return x(result_multi[d]['x']); })
+       .attr("cy", function(d,i) {return y(result_univ[d]['y']); })
+	   .attr("fill", function(d,i) { return color_object[d]['col']})
+   	   .attr("stroke", function(d,i) { return result_univ[d]['stroke']})
+
+    // update text locations
+    g.selectAll("text")
+   	   .data(col_row_names)
+       .transition()
+	   .duration(3000)
+	   .attr('x', function(d,i) {return x(result_univ[d]['x'] + 3); })
+	   .attr('y', function(d,i) {return y(result_univ[d]['y']); })
+	   .text( function (d) {return d })
+    
 	
 }
 		 
@@ -273,11 +326,11 @@ for (i=0;i< (col_row_names.length - 1) ;i++) {
 // 2. translate the focus point to the center of the page
 
 // Find max x or y coordinate (aka scale factor)
-function findMaxDistance(result_univ) {
+function findMaxDistance(result) {
 	var xarray = [];
-	for(i in result_univ) { xarray.push(result_univ[i].x) };
+	for(i in result) { xarray.push(result[i].x) };
 	var yarray = [];
-	for(i in result_univ) { yarray.push(result_univ[i].y) };
+	for(i in result) { yarray.push(result[i].y) };
 	var max_x = d3.max(xarray, function(d) {return abs(d); })
 	var max_y = d3.max(yarray, function(d) {return abs(d); })
 	if( max_x > max_y) {
