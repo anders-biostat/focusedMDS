@@ -320,8 +320,7 @@ g.selectAll("circle")
 			   console.log( "You have clicked on point " + d)
 
 			   result_univ = focused_mds(dis, d)
-			   		//var xy_trans = translate_xy(result.xcoords, result.ycoords)
-	           		//var scalefactor = findScaleFactor(result)
+			   maxDistance = findMaxDistance(result_univ)
 			   console.log(d, 'result_univ:', result_univ)
 			   
 		       // update scale domains

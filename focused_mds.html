@@ -33,8 +33,9 @@ g.svgText{ pointer-events:none}
 	<input  name="updateButton"
 			type="button"
 			value="Multivariate Optimization",
-			onclick=""> 
+			onclick="updateWithMulti()" /> 
 
+<div/>
 </body>
 </html>
 
@@ -232,6 +233,26 @@ var b = performance.now()
 console.log('Univariate optimization took: ', b-a , ' ms.')
 console.log('this is result_univ object:',result_univ)
 
+// Multivariate optimization, on button click				
+
+function updateWithMulti() {
+	console.log("previous result_univ:", result_univ)
+	var phis_univ = [];
+	for(i in result_univ){
+		phis_univ.push(result_univ[i].phi);
+	}
+
+	var c = performance.now()
+	var result_multi = bfgs(phis_univ, {f:stress_multi, df:gradient},1000, 1, {maxTry: 200})
+	var d = performance.now()
+	console.log('Multivariate optimization took: ', d - c, ' ms.')
+	console.log('This is the result_multi object:', result_multi)
+	
+	
+	
+	
+}
+		 
 /// D3 specifications for plotting
 
 // Set window size and margins
@@ -321,13 +342,11 @@ g.selectAll("circle")
 		   .attr("stroke", function(d,i) { return result_univ[d]['stroke']})  
 		   .on( "dblclick", function(d,i) {
 			  
-			   //rerun focused MDS, translate points to center of screen,
-			   // update plotdata, calculate new scaling factor
+			   //rerun focused MDS, find new maxDistance
 			   console.log( "You have clicked on point " + d)
 
 			   result_univ = focused_mds(dis, d)
-			   		//var xy_trans = translate_xy(result.xcoords, result.ycoords)
-	           		//var scalefactor = findScaleFactor(result)
+			   maxDistance = findMaxDistance(result_univ)
 			   console.log(d, 'result_univ:', result_univ)
 			   
 		       // update scale domains
@@ -383,19 +402,7 @@ var textLabels = text
 					 .attr("fill", "black")
 					 .style("visibility","hidden")
 				
-// Multivariate optimization, after plotting data from univariate optimization				
-		 
-var phis_univ = [];
-for(i in result_univ){
-	phis_univ.push(result_univ[i].phi);
-}
 
-var c = performance.now()
-//var result_multi = bfgs(phis_univ, {f:stress_multi, df:gradient},1000, 1, {maxTry: 200})
-var d = performance.now()
-
-console.log('Multivariate optimization took: ', d - c, ' ms.')
-console.log('This is the result_multi object:', result_multi)
 		
  
 </script>
