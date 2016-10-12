@@ -236,7 +236,6 @@ console.log('this is result_univ object:',result_univ)
 // Multivariate optimization, on button click				
 
 function updateWithMulti() {
-	console.log("previous result_univ:", result_univ)
 	var phis_univ = [];
 	for(i in result_univ){
 		phis_univ.push(result_univ[i].phi);
@@ -249,34 +248,30 @@ function updateWithMulti() {
 	console.log('This is the bfgs_result object:', bfgs_result)
 	
 	// The output of the BFGS are the phis in the same order as given in phis_univ, which are
-	// in the same order as the result_univ file. Turn this into an indexable object for use below.
+	// in the same order as the result_univ file. We'll reassociate them with names in the object below.
 	
-	var multi_phis = 
-	
+	var phis_multi = {};
+	for(var i=0; i< Object.keys(result_univ).length; i++){
+		phis_multi[Object.keys(result_univ)[i]] = {
+			phi_multi: [bfgs_result.x[i]]
+		}
+	}
 	// create result_multi using optimized phis, given rs, and recalculating xy coords
-	var result_multi = {
-		col_row_names[i] = {
-			r: [],
-			phi: [],
+	var result_multi= {};
+	for(var i=0; i < col_row_names.length; i++){
+		result_multi[col_row_names[i]] = {
+			r: result_univ[col_row_names[i]].r,
+			phi: phis_multi[col_row_names[i]].phi_multi,
 			x: [],
-			y: []
+			y:[]
 		}
 	}
 	
-	
-	for(i in result_multi) {
-		result_multi[col_row_names[i]].r = result_univ[col_row_names[i]].r ;
-		result_multi[col_row_names[i]].phi = 
+	for(var i=0; i< col_row_names.length; i++){
+		result_multi[col_row_names[i]].x = result_multi[col_row_names[i]].r * cos(result_multi[col_row_names[i]].phi)
+		result_multi[col_row_names[i]].y = result_multi[col_row_names[i]].r * sin(result_multi[col_row_names[i]].phi)
 	}
-	
-	for(i in result_multi){
-		result_multi[i].phi = multi_phis.x[i];
-		result_multi[i].x = result_multi[i].r * cos(result_multi[i.phi]);
-		result_multi[i].y = result_multi[i].r * sin(result_multi[i.phi]);
-	}
-	
-	console.log("multi",result_multi)
-	console.log("original result_univ", result_univ)
+	console.log("result_multi",result_multi)
 	
     maxDistance = findMaxDistance(result_multi)
 
@@ -290,20 +285,18 @@ function updateWithMulti() {
        .transition()
        .duration(3000)
    	   .attr("cx", function(d,i) {return x(result_multi[d]['x']); })
-       .attr("cy", function(d,i) {return y(result_univ[d]['y']); })
+       .attr("cy", function(d,i) {return y(result_multi[d]['y']); })
 	   .attr("fill", function(d,i) { return color_object[d]['col']})
-   	   .attr("stroke", function(d,i) { return result_univ[d]['stroke']})
+   	   .attr("stroke", function(d,i) { return stroke_colors[d]})
 
     // update text locations
     g.selectAll("text")
    	   .data(col_row_names)
        .transition()
 	   .duration(3000)
-	   .attr('x', function(d,i) {return x(result_univ[d]['x'] + 3); })
-	   .attr('y', function(d,i) {return y(result_univ[d]['y']); })
-	   .text( function (d) {return d })
-    
-	
+	   .attr('x', function(d,i) {return x(result_multi[d]['x'] + 3); })
+	   .attr('y', function(d,i) {return y(result_multi[d]['y']); })
+	   .text( function (d) {return d })	
 }
 		 
 /// D3 specifications for plotting
@@ -392,7 +385,7 @@ g.selectAll("circle")
 		   .attr("cy", function(d,i) {return y(result_univ[d]['y']); })
 		   .attr("r", 6)
            .attr("fill", function(d,i) { return color_object[d]['col']})
-		   .attr("stroke", function(d,i) { return result_univ[d]['stroke']})  
+		   .attr("stroke", function(d,i) { return stroke_colors[d]})  
 		   .on( "dblclick", function(d,i) {
 			  
 			   //rerun focused MDS, find new maxDistance
@@ -414,7 +407,7 @@ g.selectAll("circle")
 			   	   .attr("cx", function(d,i) {return x(result_univ[d]['x']); })
 			       .attr("cy", function(d,i) {return y(result_univ[d]['y']); })
 				   .attr("fill", function(d,i) { return color_object[d]['col']})
-			   	   .attr("stroke", function(d,i) { return result_univ[d]['stroke']})
+			   	   .attr("stroke", function(d,i) { return stroke_colors[d]})
 			   
 			   // update text locations
 			   g.selectAll("text")
