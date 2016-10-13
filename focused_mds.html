@@ -242,7 +242,7 @@ function updateWithMulti() {
 	}
 
 	var c = performance.now()
-	var bfgs_result = bfgs(phis_univ, {f:stress_multi, df:gradient},1000, 1, {maxTry: 200})
+	var bfgs_result = bfgs(phis_univ, {f:stress_multi, df:gradient},1000, 0.1, {maxTry: 200})
 	var d = performance.now()
 	console.log('Multivariate optimization took: ', d - c, ' ms.')
 	console.log('This is the bfgs_result object:', bfgs_result)
@@ -287,7 +287,7 @@ function updateWithMulti() {
    	   .attr("cx", function(d,i) {return x(result_multi[d]['x']); })
        .attr("cy", function(d,i) {return y(result_multi[d]['y']); })
 	   .attr("fill", function(d,i) { return color_object[d]['col']})
-   	   .attr("stroke", function(d,i) { return stroke_colors[d]})
+   	   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "magenta"}})
 
     // update text locations
     g.selectAll("text")
@@ -313,12 +313,7 @@ for (i=0;i< (col_row_names.length - 1) ;i++) {
 	stroke_colors.push("");
 }
 
-// What we want to do now is 
-// 1. figure out what the max distance is from the center coordinate to any x or y coordinate (absolute)
-// and set that to the min AND max for the x and y scale domains
-// 2. translate the focus point to the center of the page
-
-// Find max x or y coordinate (aka scale factor)
+// Find max x or y coordinate
 function findMaxDistance(result) {
 	var xarray = [];
 	for(i in result) { xarray.push(result[i].x) };
@@ -334,7 +329,6 @@ function findMaxDistance(result) {
 }
 
 var maxDistance = findMaxDistance(result_univ)
-console.log(maxDistance)
 
 // Create scaling factors
 var x = d3.scaleLinear()
@@ -359,8 +353,6 @@ var main = chart.append('g')
 
 var g = main.append("svg:g");
 
- 
-				
 // Create grid ellipses
 var ellipse_coords = {
 	rx: [50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000],
@@ -385,7 +377,7 @@ g.selectAll("circle")
 		   .attr("cy", function(d,i) {return y(result_univ[d]['y']); })
 		   .attr("r", 6)
            .attr("fill", function(d,i) { return color_object[d]['col']})
-		   .attr("stroke", function(d,i) { return stroke_colors[d]})  
+		   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "magenta"}})  
 		   .on( "dblclick", function(d,i) {
 			  
 			   //rerun focused MDS, find new maxDistance
@@ -398,7 +390,8 @@ g.selectAll("circle")
 		       // update scale domains
 		       x.domain([-1*maxDistance, maxDistance])
 		       y.domain([-1*maxDistance, maxDistance])
-			   		      
+			   
+			   
 			   // update all circles
 			   g.selectAll("circle")
 			       .data(col_row_names)
@@ -407,7 +400,7 @@ g.selectAll("circle")
 			   	   .attr("cx", function(d,i) {return x(result_univ[d]['x']); })
 			       .attr("cy", function(d,i) {return y(result_univ[d]['y']); })
 				   .attr("fill", function(d,i) { return color_object[d]['col']})
-			   	   .attr("stroke", function(d,i) { return stroke_colors[d]})
+			   	   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "magenta"}})
 			   
 			   // update text locations
 			   g.selectAll("text")
