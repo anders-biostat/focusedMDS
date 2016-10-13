@@ -306,13 +306,6 @@ var margin = {top: 90, right: 90, bottom: 90, left: 90}
    , width = 700 - margin.left - margin.right
    , height = 700 - margin.top - margin.bottom;
 
-// Create array of stroke colors
-var stroke_colors = [ "magenta" ]
-
-for (i=0;i< (col_row_names.length - 1) ;i++) { 
-	stroke_colors.push("");
-}
-
 // Find max x or y coordinate
 function findMaxDistance(result) {
 	var xarray = [];
@@ -359,6 +352,51 @@ var ellipse_coords = {
 	ry: [50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000]	
 }
 
+// Create arc element
+
+var arc = d3.arc()
+	.innerRadius(180)
+	.outerRadius(240)
+	.startAngle(0)
+
+var path = g.append("path")
+	.datum({endAngle: 2*Math.PI})
+	.attr("d", arc);
+
+
+
+// Write the arcTween function
+
+function arcTween(newAngle) {
+	return function(d) {
+		var interpolate = d3.interpolate(d.endAngle, newAngle);
+		return function(t) {
+			d.endAngle = interpolate(t);
+			return arc(d);
+		};
+	};
+}
+
+// Translate function
+
+function arcTranslateFn() {
+	return function(d,i){
+		
+		// t is the fraction of time (between 0 and 1) since the transition began
+		return function(t){
+			//var t_offset = d.get('offset');
+			var t_x, t_y;
+			
+			var rotation_radius = result_univ[d]['r'];
+			var t_angle = (2* Math.PI) * t;
+			var t_x = rotation_radius * cos(t_angle);
+			var t_y = rotation_radius * sin(t_angle);
+			
+			return "translate(" + (width/2 + t_x) + "," + (height/2 + t_y) + ")";
+		};
+	};
+}
+
 g.selectAll("ellipse")
     .data(col_row_names)
 	.enter().append("ellipse")
@@ -397,6 +435,7 @@ g.selectAll("circle")
 			       .data(col_row_names)
 			       .transition()
 			       .duration(3000)
+			   	   .attrTween("transform", arcTranslateFn())
 			   	   .attr("cx", function(d,i) {return x(result_univ[d]['x']); })
 			       .attr("cy", function(d,i) {return y(result_univ[d]['y']); })
 				   .attr("fill", function(d,i) { return color_object[d]['col']})
