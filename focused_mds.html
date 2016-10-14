@@ -32,8 +32,15 @@ g.svgText{ pointer-events:none}
 <div id="option">
 	<input  name="updateButton"
 			type="button"
-			value="Multivariate Optimization",
+			value="Multivariate Optimization (Stepwise)",
 			onclick="updateWithMulti()" /> 
+
+<div/>
+<div id="option">
+	<input  name="updateButton"
+			type="button"
+			value="Multivariate Optimization (Post-Hoc)",
+			onclick="updateWithMulti_posthoc()" /> 
 
 <div/>
 </body>
@@ -86,7 +93,7 @@ var color_object = createColorObject(color_ids);
 
 // Focused MDS function
 
-function focused_mds(m, focus_point) {
+function focused_mds(m, focus_point, univ_or_multi) {
 	// call distances for focus_point
 	var dists = dis[col_row_names.indexOf(focus_point)];
 	
@@ -100,7 +107,7 @@ function focused_mds(m, focus_point) {
 		return a[1] - b[1];
 	});
 	
-	// return index of names in distance from focus point 
+	// return index of names in order of distance from focus point 
 	var names = [];
 	for (i in names_dists){ names.push(names_dists[i][0]); };
 	
@@ -111,7 +118,8 @@ function focused_mds(m, focus_point) {
 			r: names_dists[i][1],
 			phi: [],
 			x: [],
-			y: []
+			y: [],
+			phi_int: []
 		}
 	};
 	
@@ -144,6 +152,66 @@ function focused_mds(m, focus_point) {
 		return stress;
 	};
 	
+	// Define a stress function whose input is an array, rather than a number
+
+	function stress_multi(phis) {
+		var stress = 0;
+		for(var i=0; i< phis.length; i++) {
+
+			for (var j=i+1; j < phis.length; j++){
+
+				var ri = sorted_object[col_row_names[i]].r;
+			
+				var rj = sorted_object[col_row_names[j]].r;
+			
+				var phi_i = phis[i];
+			
+				var phi_j = phis[j];
+			
+				var Dij = Math.sqrt( sqr(ri*cos(phi_i) - rj*cos(phi_j)) + sqr(ri*sin(phi_i) - rj*sin(phi_j)) )
+			
+				var stress = stress + sqr(dis[i][j] - Dij );
+			};	
+		};
+		//console.log("called objective function.","stress is;",stress)
+		return stress;		
+	};
+
+	// define the gradient function, the derivative of the stress function in stress/stress_multi
+
+	function gradient(phis){
+
+		var stress_derivative = [];
+	
+		for(var i=0; i< phis.length; i++) {
+		
+			var stressd_inner = 0;
+			for (var j=0; j < phis.length; j++){
+			
+				if (i==j){ continue; }
+			
+				var ri = sorted_object[col_row_names[i]].r;
+			
+				var rj = sorted_object[col_row_names[j]].r;
+			
+				var phi_i = phis[i];
+			
+				var phi_j = phis[j];
+			
+				var Dij = Math.sqrt( sqr(ri*cos(phi_i) - rj*cos(phi_j)) + sqr(ri*sin(phi_i) - rj*sin(phi_j)) )
+			
+				var Sij = dis[i][j] - Dij
+			
+				var  stressd_inner = stressd_inner +
+				( 2*ri*rj*sin(phi_j - phi_i) * Sij) / Dij 
+	
+			};
+			stress_derivative.push( stressd_inner );
+		};
+		//console.log("called gradient.","derivative is:", stress_derivative)
+		return stress_derivative;	
+	};
+	
 	// setting phi, xy coords, and colors for first two points
 	sorted_object[names[0]].phi = 0;
 	sorted_object[names[0]].x = 0;
@@ -153,37 +221,101 @@ function focused_mds(m, focus_point) {
 	sorted_object[names[1]].x = sorted_object[names[1]].r * cos(sorted_object[names[1]].phi);
 	sorted_object[names[1]].y = sorted_object[names[1]].r * sin(sorted_object[names[1]].phi);
 	
-	// using univariate optimization to calculate the rest
-	for(var i = 2; i < names.length; i++) {
+	// using univariate or multivariate optimization to calculate the rest
+	if(univ_or_multi == "univariate"){
+		for(var i = 2; i < names.length; i++) {
 			sorted_object[names[i]].phi = optimize_js(0, Math.PI*2, stress, 0.001);
 		
 			sorted_object[names[i]].x = sorted_object[names[i]].r * cos(sorted_object[names[i]].phi);
 			sorted_object[names[i]].y = sorted_object[names[i]].r * sin(sorted_object[names[i]].phi);
-	};
+		};
+	} else if( univ_or_multi == "multivariate"){
+		var c = performance.now()
+		for(var i = 2; i < names.length; i++){
+			sorted_object[names[i]].phi = optimize_js(0, Math.PI*2, stress, 0.001);
+			
+			var phis_univ = [];
+			for(var j=0; j <= i; j++){
+				phis_univ.push(sorted_object[names[j]].phi);
+			}
+			
+			var bfgs_result = bfgs(phis_univ, {f:stress_multi, df:gradient},1000, 1, {maxTry: 200})
+			
+			// Write over the current phis with the multivariate result
+			sorted_object[names[i]].phi = bfgs_result.x[i]	
+		}
+		var d = performance.now()
+		console.log('Multivariate optimization took:', d-c, 'ms.')
+		// Since the multivariate stress function calls only r and phi values in calculating stress, we can do all the xy coord calculations at the end.
+		for(var i=0; i< col_row_names.length; i++){
+			sorted_object[col_row_names[i]].x = sorted_object[col_row_names[i]].r * cos(sorted_object[col_row_names[i]].phi)
+			sorted_object[col_row_names[i]].y = sorted_object[col_row_names[i]].r * sin(sorted_object[col_row_names[i]].phi)
+		}		
+	} else throw "Error: multivariate or univariate optimization not specified";
 	
 	return sorted_object;
 };
 
 
-// Define a stress function whose input is an array, rather than a number
+var a = performance.now()
+var result_univ = focused_mds(dis, col_row_names[0], "univariate")
+var b = performance.now()
 
+console.log('Univariate optimization took: ', b-a , ' ms.')
+console.log('this is result_univ object:',result_univ)
+
+// Stepwise multivariate optimization, on button click				
+
+function updateWithMulti() {
+
+	var result_multi = focused_mds(dis, Object.keys(result_univ)[0], "multivariate" )
+	console.log("result_multi",result_multi)
+	
+    maxDistance = findMaxDistance(result_multi)
+
+    // update scale domains
+    x.domain([-1*maxDistance, maxDistance])
+    y.domain([-1*maxDistance, maxDistance])
+	      
+    // update all circles
+    g.selectAll("circle")
+       .data(col_row_names)
+       .transition()
+       .duration(3000)
+   	   .attr("cx", function(d,i) {return x(result_multi[d]['x']); })
+       .attr("cy", function(d,i) {return y(result_multi[d]['y']); })
+	   .attr("fill", function(d,i) { return color_object[d]['col']})
+   	   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "magenta"}})
+
+    // update text locations
+    g.selectAll("text")
+   	   .data(col_row_names)
+       .transition()
+	   .duration(3000)
+	   .attr('x', function(d,i) {return x(result_multi[d]['x'] + 3); })
+	   .attr('y', function(d,i) {return y(result_multi[d]['y']); })
+	   .text( function (d) {return d })	
+}
+		
+// Multivariate optimization using a single input of most recent phis calculated by univariate optimization
+
+// Stress-multi function outside the context of focused_mds
 function stress_multi(phis) {
-	if(result_univ == undefined) throw "univariate optimization not run yet!";
 	var stress = 0;
 	for(var i=0; i< phis.length; i++) {
 
 		for (var j=i+1; j < phis.length; j++){
 
 			var ri = result_univ[col_row_names[i]].r;
-			
+		
 			var rj = result_univ[col_row_names[j]].r;
-			
+		
 			var phi_i = phis[i];
-			
+		
 			var phi_j = phis[j];
-			
+		
 			var Dij = Math.sqrt( sqr(ri*cos(phi_i) - rj*cos(phi_j)) + sqr(ri*sin(phi_i) - rj*sin(phi_j)) )
-			
+		
 			var stress = stress + sqr(dis[i][j] - Dij );
 		};	
 	};
@@ -191,34 +323,33 @@ function stress_multi(phis) {
 	return stress;		
 };
 
-// define the gradient function, the derivative of the stress function in stress/stress_multi
-
+// Gradient function outside of the context of the 
 function gradient(phis){
 
 	var stress_derivative = [];
-	
+
 	for(var i=0; i< phis.length; i++) {
-		
+	
 		var stressd_inner = 0;
 		for (var j=0; j < phis.length; j++){
-			
+		
 			if (i==j){ continue; }
-			
+		
 			var ri = result_univ[col_row_names[i]].r;
-			
+		
 			var rj = result_univ[col_row_names[j]].r;
-			
+		
 			var phi_i = phis[i];
-			
+		
 			var phi_j = phis[j];
-			
+		
 			var Dij = Math.sqrt( sqr(ri*cos(phi_i) - rj*cos(phi_j)) + sqr(ri*sin(phi_i) - rj*sin(phi_j)) )
-			
+		
 			var Sij = dis[i][j] - Dij
-			
+		
 			var  stressd_inner = stressd_inner +
 			( 2*ri*rj*sin(phi_j - phi_i) * Sij) / Dij 
-	
+
 		};
 		stress_derivative.push( stressd_inner );
 	};
@@ -226,33 +357,71 @@ function gradient(phis){
 	return stress_derivative;	
 };
 
-var a = performance.now()
-var result_univ = focused_mds(dis, col_row_names[0])
-var b = performance.now()
-
-console.log('Univariate optimization took: ', b-a , ' ms.')
-console.log('this is result_univ object:',result_univ)
-
-// Multivariate optimization, on button click				
-
-function updateWithMulti() {
-	console.log("previous result_univ:", result_univ)
+function updateWithMulti_posthoc(){
 	var phis_univ = [];
-	for(i in result_univ){
-		phis_univ.push(result_univ[i].phi);
-	}
+		for(i in result_univ){
+			phis_univ.push(result_univ[i].phi);
+		}
 
 	var c = performance.now()
-	var result_multi = bfgs(phis_univ, {f:stress_multi, df:gradient},1000, 1, {maxTry: 200})
+	var bfgs_result = bfgs(phis_univ, {f:stress_multi, df:gradient},1000, 1, {maxTry: 200})
 	var d = performance.now()
 	console.log('Multivariate optimization took: ', d - c, ' ms.')
-	console.log('This is the result_multi object:', result_multi)
-	
-	
-	
-	
+	console.log('This is the bfgs_result object:', bfgs_result)
+
+	// The output of the BFGS are the phis in the same order as given in phis_univ, which are
+	// in the same order as the result_univ file. We'll reassociate them with names in the object below.
+
+	var phis_multi = {};
+	for(var i=0; i< Object.keys(result_univ).length; i++){
+		phis_multi[Object.keys(result_univ)[i]] = {
+			phi_multi: [bfgs_result.x[i]]
+		}
+	}
+
+	// create result_multi using optimized phis, given rs, and recalculating xy coords
+	var result_multi= {};
+	for(var i=0; i < col_row_names.length; i++){
+		result_multi[col_row_names[i]] = {
+			r: result_univ[col_row_names[i]].r,
+			phi: phis_multi[col_row_names[i]].phi_multi,
+			x: [],
+			y:[]
+		}
+	}
+
+	for(var i=0; i< col_row_names.length; i++){
+		result_multi[col_row_names[i]].x = result_multi[col_row_names[i]].r * cos(result_multi[col_row_names[i]].phi)
+		result_multi[col_row_names[i]].y = result_multi[col_row_names[i]].r * sin(result_multi[col_row_names[i]].phi)
+	}
+
+    maxDistance = findMaxDistance(result_multi)
+
+    // update scale domains
+    x.domain([-1*maxDistance, maxDistance])
+    y.domain([-1*maxDistance, maxDistance])
+	      
+    // update all circles
+    g.selectAll("circle")
+       .data(col_row_names)
+       .transition()
+       .duration(3000)
+   	   .attr("cx", function(d,i) {return x(result_multi[d]['x']); })
+       .attr("cy", function(d,i) {return y(result_multi[d]['y']); })
+	   .attr("fill", function(d,i) { return color_object[d]['col']})
+   	   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "magenta"}})
+
+    // update text locations
+    g.selectAll("text")
+   	   .data(col_row_names)
+       .transition()
+	   .duration(3000)
+	   .attr('x', function(d,i) {return x(result_multi[d]['x'] + 3); })
+	   .attr('y', function(d,i) {return y(result_multi[d]['y']); })
+	   .text( function (d) {return d })	
 }
-		 
+
+ 
 /// D3 specifications for plotting
 
 // Set window size and margins
@@ -260,24 +429,12 @@ var margin = {top: 90, right: 90, bottom: 90, left: 90}
    , width = 700 - margin.left - margin.right
    , height = 700 - margin.top - margin.bottom;
 
-// Create array of stroke colors
-var stroke_colors = [ "magenta" ]
-
-for (i=0;i< (col_row_names.length - 1) ;i++) { 
-	stroke_colors.push("");
-}
-
-// What we want to do now is 
-// 1. figure out what the max distance is from the center coordinate to any x or y coordinate (absolute)
-// and set that to the min AND max for the x and y scale domains
-// 2. translate the focus point to the center of the page
-
-// Find max x or y coordinate (aka scale factor)
-function findMaxDistance(result_univ) {
+// Find max x or y coordinate
+function findMaxDistance(result) {
 	var xarray = [];
-	for(i in result_univ) { xarray.push(result_univ[i].x) };
+	for(i in result) { xarray.push(result[i].x) };
 	var yarray = [];
-	for(i in result_univ) { yarray.push(result_univ[i].y) };
+	for(i in result) { yarray.push(result[i].y) };
 	var max_x = d3.max(xarray, function(d) {return abs(d); })
 	var max_y = d3.max(yarray, function(d) {return abs(d); })
 	if( max_x > max_y) {
@@ -288,7 +445,6 @@ function findMaxDistance(result_univ) {
 }
 
 var maxDistance = findMaxDistance(result_univ)
-console.log(maxDistance)
 
 // Create scaling factors
 var x = d3.scaleLinear()
@@ -313,13 +469,24 @@ var main = chart.append('g')
 
 var g = main.append("svg:g");
 
- 
-				
 // Create grid ellipses
 var ellipse_coords = {
 	rx: [50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000],
 	ry: [50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000]	
 }
+
+// Create arc element
+
+var arc = d3.arc()
+	.innerRadius(width/2)
+	.outerRadius(width/2)
+	.startAngle(0)
+	//.endAngle(function(d) { return ()})
+
+var path = g.append("path")
+	.datum({endAngle: 2*Math.PI})
+	.style("fill", "none")
+	.attr("d", arc);
 
 g.selectAll("ellipse")
     .data(col_row_names)
@@ -339,29 +506,45 @@ g.selectAll("circle")
 		   .attr("cy", function(d,i) {return y(result_univ[d]['y']); })
 		   .attr("r", 6)
            .attr("fill", function(d,i) { return color_object[d]['col']})
-		   .attr("stroke", function(d,i) { return result_univ[d]['stroke']})  
+		   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "magenta"}})  
 		   .on( "dblclick", function(d,i) {
 			  
 			   //rerun focused MDS, find new maxDistance
 			   console.log( "You have clicked on point " + d)
-
-			   result_univ = focused_mds(dis, d)
+			   
+			   // save phis from previous result for arc transition
+			   var old_result = {};
+			   for(var i=0; i< Object.keys(result_univ).length; i++){
+				   old_result[Object.keys(result_univ)[i]] = {
+					   phi: result_univ[Object.keys(result_univ)[i]].phi
+				   }
+			   }
+			   
+			   // update result_univ object by rerunning focused_mds
+			   result_univ = focused_mds(dis, d, "univariate")
 			   maxDistance = findMaxDistance(result_univ)
-			   console.log(d, 'result_univ:', result_univ)
+			   console.log(d, ' new result_univ:', result_univ)
 			   
 		       // update scale domains
 		       x.domain([-1*maxDistance, maxDistance])
 		       y.domain([-1*maxDistance, maxDistance])
-			   		      
+			   
+			   
 			   // update all circles
 			   g.selectAll("circle")
 			       .data(col_row_names)
 			       .transition()
 			       .duration(3000)
+			   	   //.attrTween("transform", function(d,i){ 
+				//	   	var thingy = d3.interpolate( old_result[d]['phi'], result_univ[d]['phi'] );
+				//	   	return function(t){
+				//	   		return arc(thingy(t));
+				//	   	};
+				//	   })
 			   	   .attr("cx", function(d,i) {return x(result_univ[d]['x']); })
 			       .attr("cy", function(d,i) {return y(result_univ[d]['y']); })
 				   .attr("fill", function(d,i) { return color_object[d]['col']})
-			   	   .attr("stroke", function(d,i) { return result_univ[d]['stroke']})
+			   	   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "magenta"}})
 			   
 			   // update text locations
 			   g.selectAll("text")
