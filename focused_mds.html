@@ -358,18 +358,59 @@ var ellipse_coords = {
 	ry: [50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000]	
 }
 
+
+// method for generating an arced path
+function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+  var angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
+
+  return {
+    x: centerX + (radius * Math.cos(angleInRadians)),
+    y: centerY + (radius * Math.sin(angleInRadians))
+  };
+}
+
+function describeArc(x, y, radius, startAngle, endAngle){
+
+    var start = polarToCartesian(x, y, radius, endAngle);
+    var end = polarToCartesian(x, y, radius, startAngle);
+
+    var largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+    var d = [
+        "M", start.x, start.y, 
+        "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y
+    ].join(" ");
+
+    return d;       
+}
+
+
+
+
 // Create arc element
+
+var svg = d3.select("svg")
 
 var arc = d3.arc()
 	.innerRadius(width/2)
 	.outerRadius(width/2)
 	.startAngle(0)
-	//.endAngle(function(d) { return ()})
+	.endAngle(Math.PI*2)
 
 var path = g.append("path")
 	.datum({endAngle: 2*Math.PI})
 	.style("fill", "none")
 	.attr("d", arc);
+
+// Initialize the object to hold the previous phi result, for interpolation
+var old_result = {};
+
+function arcTween(b) {
+	var i = d3.interpolate(old_result[b]['phi'], result_univ[b]['phi']);
+	return function(t) {
+		return arc(i(t));
+	}
+}
 
 g.selectAll("ellipse")
     .data(col_row_names)
@@ -396,7 +437,7 @@ g.selectAll("circle")
 			   console.log( "You have clicked on point " + d)
 			   
 			   // save phis from previous result for arc transition
-			   var old_result = {};
+			   old_result = {};
 			   for(var i=0; i< Object.keys(result_univ).length; i++){
 				   old_result[Object.keys(result_univ)[i]] = {
 					   phi: result_univ[Object.keys(result_univ)[i]].phi
@@ -418,12 +459,8 @@ g.selectAll("circle")
 			       .data(col_row_names)
 			       .transition()
 			       .duration(3000)
-			   	   //.attrTween("transform", function(d,i){ 
-				//	   	var thingy = d3.interpolate( old_result[d]['phi'], result_univ[d]['phi'] );
-				//	   	return function(t){
-				//	   		return arc(thingy(t));
-				//	   	};
-				//	   })
+			   	   .ease("elastic")
+			       .attrTween("d", arcTween)
 			   	   .attr("cx", function(d,i) {return x(result_univ[d]['x']); })
 			       .attr("cy", function(d,i) {return y(result_univ[d]['y']); })
 				   .attr("fill", function(d,i) { return color_object[d]['col']})
