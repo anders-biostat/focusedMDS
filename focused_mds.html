@@ -113,8 +113,7 @@ function focused_mds(m, focus_point, univ_or_multi, limited_mem) {
 			r: names_dists[i][1],
 			phi: [],
 			x: [],
-			y: [],
-			phi_int: []
+			y: []
 		}
 	};
 	
@@ -212,7 +211,7 @@ function focused_mds(m, focus_point, univ_or_multi, limited_mem) {
 	sorted_object[names[0]].x = 0;
 	sorted_object[names[0]].y = 0;
 
-	sorted_object[names[1]].phi = Math.PI/2;
+	sorted_object[names[1]].phi = 3*Math.PI/2;
 	sorted_object[names[1]].x = sorted_object[names[1]].r * cos(sorted_object[names[1]].phi);
 	sorted_object[names[1]].y = sorted_object[names[1]].r * sin(sorted_object[names[1]].phi);
 	
@@ -278,8 +277,6 @@ function updateWithMulti() {
 	var result_multi = focused_mds(dis, Object.keys(result_univ)[0], "multivariate" )
 	console.log("result_multi",result_multi)
 	
-    maxDistance = findMaxDistance(result_multi)
-
     // update scale domains
     x.domain([-1*maxDistance, maxDistance])
     y.domain([-1*maxDistance, maxDistance])
@@ -289,8 +286,16 @@ function updateWithMulti() {
        .data(col_row_names)
        .transition()
        .duration(3000)
-   	   .attr("cx", function(d,i) {return x(result_multi[d]['x']); })
-       .attr("cy", function(d,i) {return y(result_multi[d]['y']); })
+	   .attrTween("cx", function(d,i) {
+		   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result_multi[d].phi] )
+		   var rTween = d3.scaleLinear().range( [old_result[d].r, result_multi[d].r] )
+		   return function(t) { return x( rTween(t) * cos( phiTween(t) ) )}
+	   })
+	   .attrTween("cy", function(d,i) {
+		   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result_multi[d].phi] )
+		   var rTween = d3.scaleLinear().range( [old_result[d].r, result_multi[d].r] )
+		   return function(t) { return y( rTween(t) * sin( phiTween(t) ) )}
+	   })
 	   .attr("fill", function(d,i) { return color_object[d]['col']})
    	   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "magenta"}})
 
@@ -299,9 +304,31 @@ function updateWithMulti() {
    	   .data(col_row_names)
        .transition()
 	   .duration(3000)
-	   .attr('x', function(d,i) {return x(result_multi[d]['x'] + 3); })
+	   .attr('x', function(d,i) {return x(result_multi[d]['x'] + 5); })
 	   .attr('y', function(d,i) {return y(result_multi[d]['y']); })
 	   .text( function (d) {return d })	
+}
+
+// Initialize the object to hold the previous phi result, for interpolation
+var old_result = {};
+
+// Write a function that takes the previous and new phis, and calculates the distances between the old and new phis 1) as they are and 2) if the new phis were mirrored- mathematically, by changing the sign of the new phis.
+
+function mirrorphis(phis_old, phis_new) {
+	var normal_comparison = []; 
+	for(var i=0; i < Object.keys(phis_new).length; i++){
+		normal_comparison[i] = Math.sqrt(sqr(phis_new[col_row_names[i]].phi - phis_old[col_row_names[i]].phi	))
+	}
+	var normal_average = (normal_comparison.reduce(add,0) / normal_comparison.length)
+	console.log('average differences in previous vs new phis, normal sign ', normal_average)
+	
+	var mirrored_comparison = [];
+	for(var i=0; i < Object.keys(phis_new).length; i++){
+		mirrored_comparison[i] = Math.sqrt(sqr(-1*(phis_new[col_row_names[i]].phi) - phis_old[col_row_names[i]].phi)	)
+	}
+	var mirrored_average = (mirrored_comparison.reduce(add,0) / mirrored_comparison.length)
+	console.log('average differences in previous vs new phis, if phis were reversed in sign',mirrored_average)
+	
 }
 
 
@@ -312,7 +339,7 @@ var margin = {top: 90, right: 90, bottom: 90, left: 90}
    , width = 700 - margin.left - margin.right
    , height = 700 - margin.top - margin.bottom;
 
-// Find max x or y coordinate
+// Find max distance in dis for scaling factor functions
 var max_array = [];
 for(var i=0; i< dis.length; i++) {
 	max_array.push(Math.max.apply(null, dis[i]))
@@ -358,10 +385,6 @@ var ellipse_coords = {
 	ry: [50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000]	
 }
 
-
-// Initialize the object to hold the previous phi result, for interpolation
-var old_result = {};
-
 g.selectAll("ellipse")
     .data(col_row_names)
 	.enter().append("ellipse")
@@ -376,8 +399,8 @@ g.selectAll("ellipse")
 g.selectAll("circle")
     .data(col_row_names)
     .enter().append("circle")
-		   .attr("cx", function(d,i) {return x(result_univ[d]['x']); })
-		   .attr("cy", function(d,i) {return y(result_univ[d]['y']); })
+		   .attr("cx", function(d,i) { return x(result_univ[d]['x']); })
+		   .attr("cy", function(d,i) { return y(result_univ[d]['y']); })
 		   .attr("r", 6)
            .attr("fill", function(d,i) { return color_object[d]['col']})
 		   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "magenta"}})  
@@ -392,16 +415,14 @@ g.selectAll("circle")
 				   old_result[Object.keys(result_univ)[i]] = {
 					   phi: result_univ[Object.keys(result_univ)[i]].phi,
 					   r: result_univ[Object.keys(result_univ)[i]].r
-				   }
-			   }
+			   }}
 			   
 			   // update result_univ object by rerunning focused_mds
 			   result_univ = focused_mds(dis, d, "univariate")
 			   console.log(d, ' new result_univ:', result_univ)
 			   
-		       // update scale domains
-		       x.domain([-1*maxDistance, maxDistance])
-		       y.domain([-1*maxDistance, maxDistance])
+			   mirrorphis(old_result, result_univ)
+			   
 			   
 			   // update all circles
 			   g.selectAll("circle")
@@ -418,8 +439,6 @@ g.selectAll("circle")
 					   var rTween = d3.scaleLinear().range( [old_result[d].r, result_univ[d].r] )
 					   return function(t) { return y( rTween(t) * sin( phiTween(t) ) )}
 				   })
-			   	   //.attr("cx", function(d,i) {return x(result_univ[d]['x']); })
-			       //.attr("cy", function(d,i) {return y(result_univ[d]['y']); })
 				   .attr("fill", function(d,i) { return color_object[d]['col']})
 			   	   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "magenta"}})
 			   
@@ -428,7 +447,7 @@ g.selectAll("circle")
 			   	   .data(col_row_names)
 			       .transition()
 				   .duration(3000)
-	  	  		   .attr('x', function(d,i) {return x(result_univ[d]['x'] + 3); })
+	  	  		   .attr('x', function(d,i) {return x(result_univ[d]['x'] + 5); })
 				   .attr('y', function(d,i) {return y(result_univ[d]['y']); })
 				   .text( function (d) {return d })
 			   
@@ -454,7 +473,7 @@ var text = g.selectAll("text")
 				
 // Create text labels	
 var textLabels = text
-	  	  		     .attr('x', function(d,i) {return x(result_univ[d]['x'] + 3) ; })
+	  	  		     .attr('x', function(d,i) {return x(result_univ[d]['x'] + 5) ; })
 					 .attr('y', function(d,i) {return y(result_univ[d]['y']); })
 					 .text( function (d) {return d })
 					 .attr("font-family", "sans-serif")
