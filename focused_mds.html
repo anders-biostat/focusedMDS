@@ -313,24 +313,21 @@ var margin = {top: 90, right: 90, bottom: 90, left: 90}
    , height = 700 - margin.top - margin.bottom;
 
 // Find max x or y coordinate
-function findMaxDistance(result) {
-	// Instead of finding iteratively for each plotting, find the max distance in the dis table and calculate the max x or y coordinate from that max r over 360 degrees. But wait.... that would be only at 0, pi/2, pi, or 2pi, right???
-	
-	
-	var xarray = [];
-	for(i in result) { xarray.push(result[i].x) };
-	var yarray = [];
-	for(i in result) { yarray.push(result[i].y) };
-	var max_x = d3.max(xarray, function(d) {return abs(d); })
-	var max_y = d3.max(yarray, function(d) {return abs(d); })
-	if( max_x > max_y) {
-		var maxDistance = max_x
-	} else {var maxDistance = max_y}
+var max_array = [];
+for(var i=0; i< dis.length; i++) {
+	max_array.push(Math.max.apply(null, dis[i]))
+};
+var max_r = Math.max.apply(null, max_array);
 
-	return maxDistance
-}
+var min_array = [];
+for(var i=0; i< dis.length; i++){
+	min_array.push(Math.min.apply(null, dis[i]))
+};
+var min_r = Math.min.apply(null, min_array);
 
-var maxDistance = findMaxDistance(result_univ)
+if (abs(min_r) > abs(max_r)) {
+	maxDistance = abs(min_r)
+} else { maxDistance = max_r}
 
 // Create scaling factors
 var x = d3.scaleLinear()
@@ -400,7 +397,6 @@ g.selectAll("circle")
 			   
 			   // update result_univ object by rerunning focused_mds
 			   result_univ = focused_mds(dis, d, "univariate")
-			   maxDistance = findMaxDistance(result_univ)
 			   console.log(d, ' new result_univ:', result_univ)
 			   
 		       // update scale domains
