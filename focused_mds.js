@@ -338,8 +338,6 @@ g.selectAll("circle")
 			   result_univ = focused_mds_int(dis, d, "univariate")
 			   console.log(d, ' new result_univ:', result_univ)
 			   
-			   mirrorphis(old_result, result_univ)
-			   
 			   
 			   // update all circles
 			   g.selectAll("circle")
