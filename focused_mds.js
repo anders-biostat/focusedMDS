@@ -25,7 +25,7 @@ var color_object = createColorObject(color_ids);
 
 // Internal focused MDS function
 
-function focused_mds_int(dis, focus_point, univ_or_multi, limited_mem) {
+function focused_mds_int(dis, focus_point) {
 	// call distances for focus_point
 	var dists = dis[col_row_names.indexOf(focus_point)];
 	
@@ -83,66 +83,6 @@ function focused_mds_int(dis, focus_point, univ_or_multi, limited_mem) {
 		return stress;
 	};
 	
-	// Define a stress function whose input is an array, rather than a number
-
-	function stress_multi(phis) {
-		var stress = 0;
-		for(var i=0; i< phis.length; i++) {
-
-			for (var j=i+1; j < phis.length; j++){
-
-				var ri = sorted_object[col_row_names[i]].r;
-			
-				var rj = sorted_object[col_row_names[j]].r;
-			
-				var phi_i = phis[i];
-			
-				var phi_j = phis[j];
-			
-				var Dij = Math.sqrt( sqr(ri*cos(phi_i) - rj*cos(phi_j)) + sqr(ri*sin(phi_i) - rj*sin(phi_j)) )
-			
-				var stress = stress + sqr(dis[i][j] - Dij );
-			};	
-		};
-		//console.log("called objective function.","stress is;",stress)
-		return stress;		
-	};
-
-	// define the gradient function, the derivative of the stress function in stress/stress_multi
-
-	function gradient(phis){
-
-		var stress_derivative = [];
-	
-		for(var i=0; i< phis.length; i++) {
-		
-			var stressd_inner = 0;
-			for (var j=0; j < phis.length; j++){
-			
-				if (i==j){ continue; }
-			
-				var ri = sorted_object[col_row_names[i]].r;
-			
-				var rj = sorted_object[col_row_names[j]].r;
-			
-				var phi_i = phis[i];
-			
-				var phi_j = phis[j];
-			
-				var Dij = Math.sqrt( sqr(ri*cos(phi_i) - rj*cos(phi_j)) + sqr(ri*sin(phi_i) - rj*sin(phi_j)) )
-			
-				var Sij = dis[i][j] - Dij
-			
-				var  stressd_inner = stressd_inner +
-				( 2*ri*rj*sin(phi_j - phi_i) * Sij) / Dij 
-	
-			};
-			stress_derivative.push( stressd_inner );
-		};
-		//console.log("called gradient.","derivative is:", stress_derivative)
-		return stress_derivative;	
-	};
-	
 	// setting phi, xy coords, and colors for first two points
 	sorted_object[names[0]].phi = 0;
 	sorted_object[names[0]].x = 0;
@@ -153,98 +93,22 @@ function focused_mds_int(dis, focus_point, univ_or_multi, limited_mem) {
 	sorted_object[names[1]].y = sorted_object[names[1]].r * sin(sorted_object[names[1]].phi);
 	
 	// using univariate or multivariate optimization to calculate the rest
-	if(univ_or_multi == "univariate"){
-		for(var i = 2; i < names.length; i++) {
-			sorted_object[names[i]].phi = optimize_js(0, Math.PI*2, stress, 0.001);
-		
-			sorted_object[names[i]].x = sorted_object[names[i]].r * cos(sorted_object[names[i]].phi);
-			sorted_object[names[i]].y = sorted_object[names[i]].r * sin(sorted_object[names[i]].phi);
-		};
-	} else if( univ_or_multi == "multivariate"){
-		var c = performance.now()
-		for(var i = 2; i < names.length; i++){
-			sorted_object[names[i]].phi = optimize_js(0, Math.PI*2, stress, 0.001);
-			
-			var phis_univ = [];
-			for(var j=0; j <= i; j++){
-				phis_univ.push(sorted_object[names[j]].phi);
-			}
-			
-			if( limited_mem == "limited"){
-				var optimizable = {
-						getValue: stress_multi,
-						getGradient: gradient
-					}
-					
-				var bfgs_result = limitedMemoryBFGS(optimizable, phis_univ);
-				console.log("performed limited memory bfgs")
-				console.log(bfgs_result)
-				
-			} else {
-				var bfgs_result = bfgs(phis_univ, {f:stress_multi, df:gradient},1000, 1, {maxTry: 200})
-			
-				// Write over the current phis with the multivariate result
-				sorted_object[names[i]].phi = bfgs_result.x[i]	
-			}	
-		}
-		var d = performance.now()
-		console.log('Multivariate optimization took:', d-c, 'ms.')
-		// Since the multivariate stress function calls only r and phi values in calculating stress, we can do all the xy coord calculations at the end.
-		for(var i=2; i< col_row_names.length; i++){
-			sorted_object[col_row_names[i]].x = sorted_object[col_row_names[i]].r * cos(sorted_object[col_row_names[i]].phi)
-			sorted_object[col_row_names[i]].y = sorted_object[col_row_names[i]].r * sin(sorted_object[col_row_names[i]].phi)
-		}		
-	} else throw "Error: multivariate or univariate optimization not specified";
+	for(var i = 2; i < names.length; i++) {
+		sorted_object[names[i]].phi = optimize_js(0, Math.PI*2, stress, 0.001);
+	
+		sorted_object[names[i]].x = sorted_object[names[i]].r * cos(sorted_object[names[i]].phi);
+		sorted_object[names[i]].y = sorted_object[names[i]].r * sin(sorted_object[names[i]].phi);
+	};
 	
 	return sorted_object;
 };
 
-
 var a = performance.now()
-var result_univ = focused_mds_int(dis, col_row_names[0], "univariate")
+var result_univ = focused_mds_int(dis, col_row_names[0])
 var b = performance.now()
 
 console.log('Univariate optimization took: ', b-a , ' ms.')
 console.log('this is result_univ object:',result_univ)
-
-// Stepwise multivariate optimization, on button click				
-
-function updateWithMulti() {
-
-	var result_multi = focused_mds_int(dis, Object.keys(result_univ)[0], "multivariate" )
-	console.log("result_multi",result_multi)
-	
-    // update scale domains
-    x.domain([-1*maxDistance, maxDistance])
-    y.domain([-1*maxDistance, maxDistance])
-	      
-    // update all circles
-    g.selectAll("circle")
-       .data(col_row_names)
-       .transition()
-       .duration(3000)
-	   .attrTween("cx", function(d,i) {
-		   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result_multi[d].phi] )
-		   var rTween = d3.scaleLinear().range( [old_result[d].r, result_multi[d].r] )
-		   return function(t) { return x( rTween(t) * cos( phiTween(t) ) )}
-	   })
-	   .attrTween("cy", function(d,i) {
-		   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result_multi[d].phi] )
-		   var rTween = d3.scaleLinear().range( [old_result[d].r, result_multi[d].r] )
-		   return function(t) { return y( rTween(t) * sin( phiTween(t) ) )}
-	   })
-	   .attr("fill", function(d,i) { return color_object[d]['col']})
-   	   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "magenta"}})
-
-    // update text locations
-    g.selectAll("text")
-   	   .data(col_row_names)
-       .transition()
-	   .duration(3000)
-	   .attr('x', function(d,i) {return x(result_multi[d]['x'] + 5); })
-	   .attr('y', function(d,i) {return y(result_multi[d]['y']); })
-	   .text( function (d) {return d })	
-}
 
 // Initialize the object to hold the previous phi result, for interpolation
 var old_result = {};
@@ -335,9 +199,8 @@ g.selectAll("circle")
 			   }}
 			   
 			   // update result_univ object by rerunning focused_mds
-			   result_univ = focused_mds_int(dis, d, "univariate")
+			   result_univ = focused_mds_int(dis, d)
 			   console.log(d, ' new result_univ:', result_univ)
-			   
 			   
 			   // update all circles
 			   g.selectAll("circle")
