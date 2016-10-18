@@ -249,26 +249,6 @@ function updateWithMulti() {
 // Initialize the object to hold the previous phi result, for interpolation
 var old_result = {};
 
-// Write a function that takes the previous and new phis, and calculates the distances between the old and new phis 1) as they are and 2) if the new phis were mirrored- mathematically, by changing the sign of the new phis.
-
-function mirrorphis(phis_old, phis_new) {
-	var normal_comparison = []; 
-	for(var i=0; i < Object.keys(phis_new).length; i++){
-		normal_comparison[i] = Math.sqrt(sqr(phis_new[col_row_names[i]].phi - phis_old[col_row_names[i]].phi	))
-	}
-	var normal_average = (normal_comparison.reduce(add,0) / normal_comparison.length)
-	console.log('average differences in previous vs new phis, normal sign ', normal_average)
-	
-	var mirrored_comparison = [];
-	for(var i=0; i < Object.keys(phis_new).length; i++){
-		mirrored_comparison[i] = Math.sqrt(sqr(-1*(phis_new[col_row_names[i]].phi) - phis_old[col_row_names[i]].phi)	)
-	}
-	var mirrored_average = (mirrored_comparison.reduce(add,0) / mirrored_comparison.length)
-	console.log('average differences in previous vs new phis, if phis were reversed in sign',mirrored_average)
-	
-}
-
-
 /// D3 specifications for plotting
 
 // Set window size and margins
@@ -417,6 +397,8 @@ var textLabels = text
 					 .attr("font-size", "12px")
 					 .attr("fill", "black")
 					 .style("visibility","hidden")
-				
+
+return g
+
 };
 		
