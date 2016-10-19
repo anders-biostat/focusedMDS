@@ -1,11 +1,13 @@
-#' <Add Title>
+#' focusedMDS
 #'
 #' <Add Description>
 #'
 #' @import htmlwidgets
 #'
 #' @export
-focusedMDS <- function(message, width = NULL, height = NULL, elementId = NULL) {
+
+
+focusedMDS <- function(dis, col_row_names= NULL, color_ids = NULL)  {
 
   # forward options using x
   x = list(
@@ -23,30 +25,26 @@ focusedMDS <- function(message, width = NULL, height = NULL, elementId = NULL) {
   )
 }
 
-#' Shiny bindings for focusedMDS
-#'
-#' Output and render functions for using focusedMDS within Shiny
-#' applications and interactive Rmd documents.
-#'
-#' @param outputId output variable to read from
-#' @param width,height Must be a valid CSS unit (like \code{'100\%'},
-#'   \code{'400px'}, \code{'auto'}) or a number, which will be coerced to a
-#'   string and have \code{'px'} appended.
-#' @param expr An expression that generates a focusedMDS
-#' @param env The environment in which to evaluate \code{expr}.
-#' @param quoted Is \code{expr} a quoted expression (with \code{quote()})? This
-#'   is useful if you want to save an expression in a variable.
-#'
-#' @name focusedMDS-shiny
-#'
-#' @export
-focusedMDSOutput <- function(outputId, width = '100%', height = '400px'){
-  htmlwidgets::shinyWidgetOutput(outputId, 'focusedMDS', width, height, package = 'focusedMDS')
-}
+# input the data and save as the object names that js needs
 
-#' @rdname focusedMDS-shiny
-#' @export
-renderFocusedMDS <- function(expr, env = parent.frame(), quoted = FALSE) {
-  if (!quoted) { expr <- substitute(expr) } # force quoted
-  htmlwidgets::shinyRenderWidget(expr, focusedMDSOutput, env, quoted = TRUE)
+if( !is.matrix(dis) )
+	stop( "'dis' must be a square matrix or 'dist' object.")
+
+if( nrow(dis) != ncol(dis))
+	stop( "Distance matrix 'dis' is not square.")
+
+if( is.null(col_row_names))
+	col_row_names <- seq(1, nrow(dis))
+
+if( nrow(dis) != length(col_row_names))
+	stop( "Number of rows in 'dis' does not match length of 'col_row_names' array.")
+
+if( !is.null(color_ids))
+	color_ids <- rep("black", nrow(dis))
+
+if( nrow(dis) != nrow(color_ids))
+	stop( "Number of rows in 'dis' does not match number of rows in 'color_ids' table.")
+
+htmlwidgets::createWidget ("focused_mds",
+list(dis=dis, col_row_names= col_row_names, color_ids= color_ids))
 }
