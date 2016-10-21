@@ -1,6 +1,6 @@
-// This function is written to be used with the focused_mds html widget
+// This function is written to be used with the focused_mds R htmlWidget
 
-function focused_mds(dis, col_row_names, color_ids) {
+function focused_mds(dis, col_row_names, color_array) {
 
 /// Initializing variables and defining functions
 function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
@@ -11,20 +11,20 @@ function add(a,b) {return a + b;}
 function repeat(str, num) {return (new Array(num+1)).join(str);}
 
 // This function creates the indexable color_object from the user input of 
-// a table with columns id, color
+// an array of names and an array of colors in the same order as those names
 
-function createColorObject(color_ids){
+function createColorObject(col_row_names, color_array){
 	var color_object = {};
-	for(var i=0; i < color_ids[0].length; i++) {
-		color_object[color_ids[0][i]] = {
-			col: color_ids[1][i]
+	for(var i=0; i < color_array.length; i++) {
+		color_object[col_row_names[i]] = {
+			col: color_array[i]
 		}
 	};
 	return color_object;
 };
 
-var color_object = createColorObject(color_ids);
-
+var color_object = createColorObject(col_row_names, color_array);
+console.log(color_object)
 // Internal focused MDS function
 
 function focused_mds_int(dis, focus_point) {
@@ -234,6 +234,7 @@ g.selectAll("circle")
 		 	 })
 	 
 			 .on("mouseover", function(d){
+				 console.log("heloooooo")
   			     d3.select("text#X"+d)	 	 
 				     .style("visibility","visible")
 		     })
