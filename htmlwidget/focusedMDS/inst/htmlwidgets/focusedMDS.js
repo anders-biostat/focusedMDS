@@ -4,22 +4,25 @@ HTMLWidgets.widget({
 
   type: 'output',
 
-  factory: function(svgElement, width, height) {
+  factory: function(el, width, height) {
 
     // TODO: define shared variables for this instance
 
 	// Create object and bind to the element
 	  
-		  d3.select(svgElement).append("div")
+		  d3.select(el).append("div")
 		    .attr("id","chart")
 
     return {
 
-      renderValue: function(x) {
-		  console.log(x.dis)
-		  console.log(x.col_row_names)
-		  console.log(x.color_ids)
-		  focused_mds(x.dis, x.col_row_names, x.color_ids)
+      renderValue: function(data) {
+		  console.log(data.dis)
+		  console.log(data.col_row_names)
+		  console.log(data.color_array)
+		  
+		  var result = focused_mds(data.dis, data.col_row_names, data.color_array)
+		  
+		  el.appendChild(result)
 		  
         // TODO: code to render the widget, e.g.
 
