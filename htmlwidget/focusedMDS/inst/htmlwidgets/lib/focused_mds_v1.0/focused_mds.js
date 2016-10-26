@@ -148,11 +148,15 @@ var y = d3.scaleLinear()
 		  .domain([-1*maxDistance, maxDistance] )
 		  .range([0, height]);
 
+// Create svg and append to a div
+		  
+
 var chart = d3.select('body')
 	 .append('svg:svg')
 	 .attr('width', width + margin.right + margin.left)
 	 .attr('height', height + margin.top + margin.bottom)
-	 .attr('class', 'chart');
+	 .attr('class', 'chart')
+	 .attr('id', 'chart_svg');
 
 var main = chart.append('g')
 	 .attr('transform','translate(' + margin.left + ',' + margin.top + ')')
@@ -160,8 +164,13 @@ var main = chart.append('g')
 	 .attr('height', height)
 	 .attr('class', 'main');
 
+//d3.select(main)
+  //.append("g")
+
 var g = main.append("svg:g");
 
+//var g =  document.createElementNS( "http://www.w3.org/2000/svg", "ellipse" )
+//console.log(g)
 // Create grid ellipses
 var ellipse_coords = {
 	rx: [50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000],
@@ -262,7 +271,7 @@ var textLabels = text
 					 .attr("fill", "black")
 					 .style("visibility","hidden")  
 
-return g
+return chart
 
 };
 		

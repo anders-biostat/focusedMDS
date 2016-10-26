@@ -11,7 +11,14 @@ HTMLWidgets.widget({
 	// Create object and bind to the element
 	  
 		  d3.select(el).append("div")
-		    .attr("id","chart")
+		    .attr("id","chart_container")
+	  
+		//  d3.select(chart)
+		//	.append('svg')
+	     // .attr('width', size)
+		 // .attr('height', size)
+		//	.attr('id', 'main')
+	  
 
     return {
 
@@ -20,9 +27,14 @@ HTMLWidgets.widget({
 		  console.log(data.col_row_names)
 		  console.log(data.color_array)
 		  
-		  var result = focused_mds(data.dis, data.col_row_names, data.color_array)
+		  focused_mds(data.dis, data.col_row_names, data.color_array);
 		  
-		  el.appendChild(result)
+		  
+		  var removed = d3.select("chart_svg").remove()
+		  
+		  d3.select(chart_container).append( function() {
+		  	return removed.node()
+		  })
 		  
         // TODO: code to render the widget, e.g.
 
