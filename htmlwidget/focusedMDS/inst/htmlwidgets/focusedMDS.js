@@ -5,22 +5,7 @@ HTMLWidgets.widget({
   type: 'output',
 
   factory: function(el, width, height) {
-
-      // TODO: define shared variables for this instance
-
-	  // Create object and bind to the element
 	  
-	  d3.select(el).append("div")
-		.attr("id","chart_container")
-	
-	  /// Initializing variables and defining functions
-	  function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
-	  var cos = Math.cos
-	  var sin = Math.sin
-	  var abs = Math.abs
-	  function add(a,b) {return a + b;}
-	  function repeat(str, num) {return (new Array(num+1)).join(str);}
-
 	  // This function creates the indexable color_object from the user input of 
 	  // an array of names and an array of colors in the same order as those names
 
@@ -33,16 +18,26 @@ HTMLWidgets.widget({
 	  	};
 	  	return color_object;
 	  };
-
-	  var color_object = createColorObject(data.col_row_names, data.color_array);
-
+	  function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
+	  function add(a,b) {return a + b;}
+	  function repeat(str, num) {return (new Array(num+1)).join(str);}
+		 var cos = Math.cos
+		 var sin = Math.sin
+	  var abs = Math.abs
+	  
 	  // Initialize the object to hold the previous phi result, for interpolation
 	  var old_result = {};
 
     return {
 
 	  renderValue: function(data) {
+	  		 console.log(data)
+			 
 
+			 
+		     var color_object = createColorObject(data.col_row_names, data.color_array);
+			 
+			 
 			 var a = performance.now()
 		     var result_univ = focused_mds(data.dis, data.col_row_names, data.col_row_names[0])
 			 var b = performance.now()
@@ -80,7 +75,7 @@ HTMLWidgets.widget({
 				  
 			 // Create svg and append to a div
 		  
-			 var chart = d3.select(chart_container)
+			 var chart = d3.select(el)
 			 	 .append('svg:svg')
 			 	 .attr('width', width )
 			 	 .attr('height', height )
@@ -134,7 +129,7 @@ HTMLWidgets.widget({
 			 			   }}
 	   
 			 			   // update result_univ object by rerunning focused_mds
-			 			   result_univ = focused_mds_int(data.dis, d)
+			 			   result_univ = focused_mds(data.dis, data.col_row_names, d)
 			 			   console.log(d, ' new result_univ:', result_univ)
 	   
 			 			   // update all circles

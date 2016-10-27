@@ -1,6 +1,14 @@
 // This function is written to be used with the focused_mds R htmlWidget
 
 function focused_mds(dis, col_row_names, focus_point) {
+    // Initializing variables and defining functions
+    function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
+    function add(a,b) {return a + b;}
+    function repeat(str, num) {return (new Array(num+1)).join(str);}
+	var cos = Math.cos
+	var sin = Math.sin
+	var abs = Math.abs
+	
 	// call distances for focus_point
 	var dists = dis[col_row_names.indexOf(focus_point)];
 	
