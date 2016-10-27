@@ -31,22 +31,11 @@ HTMLWidgets.widget({
     return {
 
 	  renderValue: function(data) {
-	  		 console.log(data)
-			 
 
-			 
 		     var color_object = createColorObject(data.col_row_names, data.color_array);
 			 
-			 
-			 var a = performance.now()
 		     var result_univ = focused_mds(data.dis, data.col_row_names, data.col_row_names[0])
-			 var b = performance.now()
-
-			 console.log('Univariate optimization took: ', b-a , ' ms.')
-			 console.log('this is result_univ object:',result_univ)
-		
-			 /// D3 specifications for plotting
-
+			 
 			 // Find max distance in dis for scaling factor functions
 			 var max_array = [];
 			 for(var i=0; i< data.dis.length; i++) {
