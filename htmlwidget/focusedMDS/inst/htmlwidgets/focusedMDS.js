@@ -25,8 +25,14 @@ HTMLWidgets.widget({
 		 var sin = Math.sin
 	  var abs = Math.abs
 	  
+	  // Find the bigger, height or width, and set to size, to maintain aspect ratio
+	  if(width > height) {
+	  	var size = height
+	  } else { var size = width}
+	  
 	  // Initialize the object to hold the previous phi result, for interpolation
 	  var old_result = {};
+	  var result = {};
 
     return {
 
@@ -56,25 +62,24 @@ HTMLWidgets.widget({
 			 // Create scaling factors
 			 var x = d3.scaleLinear()
 			          .domain([-1*maxDistance, maxDistance])
-			          .range([0, width]);
+			          .range([0, size]);
 
 			 var y = d3.scaleLinear()
 					  .domain([-1*maxDistance, maxDistance] )
-					  .range([0, height]);
+					  .range([0, size]);
 				  
 			 // Create svg and append to a div
 		  
 			 var chart = d3.select(el)
 			 	 .append('svg:svg')
-			 	 .attr('width', width )
-			 	 .attr('height', height )
+			 	 .attr('width', size )
+			 	 .attr('height', size )
 			 	 .attr('class', 'chart')
 			 	 .attr('id', 'chart_svg');
 
 			 var main = chart.append('g')
-			 	 //.attr('transform','translate(' + margin.left + ',' + margin.top + ')')
-			 	 .attr('width', width)
-			 	 .attr('height', height)
+			 	 .attr('width', size)
+			 	 .attr('height', size)
 			 	 .attr('class', 'main');
 
 			 var g = main.append("svg:g");
@@ -88,12 +93,12 @@ HTMLWidgets.widget({
 			 g.selectAll("ellipse")
 			     .data(data.col_row_names)
 			 	.enter().append("ellipse")
-			 	    .attr("cx", function(d) {return (result_univ[data.col_row_names[0]]['x'] + width/2 ); })
-			         .attr("cy", function(d) {return (result_univ[data.col_row_names[0]]['y'] + height/2 ); })
+			 	     .attr("cx", function(d) {return (result_univ[data.col_row_names[0]]['x'] + size/2 ); })
+			         .attr("cy", function(d) {return (result_univ[data.col_row_names[0]]['y'] + size/2 ); })
 			         .attr("rx", function(d,i) {return ( ellipse_coords['rx'][i]); })
 			         .attr("ry", function(d,i) {return ( ellipse_coords['ry'][i]); })
-			 		.attr("fill", "none")
-			 		.attr("stroke","gray")
+			 		 .attr("fill", "none")
+			 		 .attr("stroke","gray")
 
 			 // Create scatterplot circles with clickable reordering
 			 g.selectAll("circle")
@@ -176,13 +181,40 @@ HTMLWidgets.widget({
 			 					 .attr("font-family", "sans-serif")
 			 					 .attr("font-size", "12px")
 			 					 .attr("fill", "black")
-			 					 .style("visibility","hidden")  
+			 					 .style("visibility","hidden") 
+			result = result_univ 
       },
 
       resize: function(width, height) {
 
-        // TODO: code to re-render the widget with a new size
-
+		  if(width > height) {
+		  	var size = height
+		  } else { var size = width}
+		  
+		  d3.select(el).select("svg")
+		    .attr("width", size)
+		    .attr("height", size)
+		  
+		  d3.select(el).select("g")
+		    .attr("width", size)
+		    .attr("height", size)
+		  
+		 // recreate scaling factors
+		 var x = d3.scaleLinear()
+		          .domain([-1*maxDistance, maxDistance])
+		          .range([0, size]);
+		  
+		  d3.select('g').selectAll("text")
+		  	.attr('x', function(d,i) {return x(result[d]['x'] + 5) ; })
+		    .attr('y', function(d,i) {return x(result[d]['y']); })
+		  
+		  d3.select('g').selectAll("circle")
+		    .attr("cx", function(d,i) { return x(result[d]['x']); })
+		    .attr("cy", function(d,i) { return x(result[d]['y']); })
+				  
+		  d3.select('g').selectAll("ellipse")
+		    .attr("cx", function(d) {return (result[data.col_row_names[0]]['x'] + size/2 ); })
+			.attr("cy", function(d) {return (result[data.col_row_names[0]]['y'] + size/2 ); })
       }
 
     };
