@@ -30,14 +30,18 @@ HTMLWidgets.widget({
 	  	var size = height
 	  } else { var size = width}
 	  
-	  // Initialize the object to hold the previous phi result, for interpolation
+	  // Initialize objects
 	  var old_result = {};
 	  var result = {};
+	  var x = {};
+	  var col_row_names = {};
+	  var focus_point = [];
 
     return {
 
 	  renderValue: function(data) {
-
+		     focus_point = data.col_row_names[0]
+		     
 		     var color_object = createColorObject(data.col_row_names, data.color_array);
 			 
 		     var result_univ = focused_mds(data.dis, data.col_row_names, data.col_row_names[0])
@@ -60,13 +64,9 @@ HTMLWidgets.widget({
 			 } else { maxDistance = max_r}
 		  
 			 // Create scaling factors
-			 var x = d3.scaleLinear()
+			 x = d3.scaleLinear()
 			          .domain([-1*maxDistance, maxDistance])
 			          .range([0, size]);
-
-			 var y = d3.scaleLinear()
-					  .domain([-1*maxDistance, maxDistance] )
-					  .range([0, size]);
 				  
 			 // Create svg and append to a div
 		  
@@ -105,9 +105,9 @@ HTMLWidgets.widget({
 			     .data(data.col_row_names)
 			     .enter().append("circle")
 			 		   .attr("cx", function(d,i) { return x(result_univ[d]['x']); })
-			 		   .attr("cy", function(d,i) { return y(result_univ[d]['y']); })
-			 		   .attr("r", 6)
-			            .attr("fill", function(d,i) { return color_object[d]['col']})
+			 		   .attr("cy", function(d,i) { return x(result_univ[d]['y']); })
+			 		   .attr("r", 0.2 * size/20)
+			           .attr("fill", function(d,i) { return color_object[d]['col']})
 			 		   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "magenta"}})  
 			 		   .on( "dblclick", function(d,i) {
 	  
@@ -124,6 +124,8 @@ HTMLWidgets.widget({
 	   
 			 			   // update result_univ object by rerunning focused_mds
 			 			   result_univ = focused_mds(data.dis, data.col_row_names, d)
+						   result = result_univ
+						   focus_point = d
 			 			   console.log(d, ' new result_univ:', result_univ)
 	   
 			 			   // update all circles
@@ -139,7 +141,7 @@ HTMLWidgets.widget({
 			 				   .attrTween("cy", function(d,i) {
 			 					   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result_univ[d].phi] )
 			 					   var rTween = d3.scaleLinear().range( [old_result[d].r, result_univ[d].r] )
-			 					   return function(t) { return y( rTween(t) * sin( phiTween(t) ) )}
+			 					   return function(t) { return x( rTween(t) * sin( phiTween(t) ) )}
 			 				   })
 			 				   .attr("fill", function(d,i) { return color_object[d]['col']})
 			 			   	   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "magenta"}})
@@ -150,7 +152,7 @@ HTMLWidgets.widget({
 			 			       .transition()
 			 				   .duration(3000)
 			 	  	  		   .attr('x', function(d,i) {return x(result_univ[d]['x'] + 5); })
-			 				   .attr('y', function(d,i) {return y(result_univ[d]['y']); })
+			 				   .attr('y', function(d,i) {return x(result_univ[d]['y']); })
 			 				   .text( function (d) {return d })
 	   
 			 		 	 })
@@ -176,13 +178,14 @@ HTMLWidgets.widget({
 			 // Create text labels	
 			 var textLabels = text
 			 	  	  		     .attr('x', function(d,i) {return x(result_univ[d]['x'] + 5) ; })
-			 					 .attr('y', function(d,i) {return y(result_univ[d]['y']); })
+			 					 .attr('y', function(d,i) {return x(result_univ[d]['y']); })
 			 					 .text( function (d) {return d })
 			 					 .attr("font-family", "sans-serif")
 			 					 .attr("font-size", "12px")
 			 					 .attr("fill", "black")
 			 					 .style("visibility","hidden") 
 			result = result_univ 
+			col_row_names = data.col_row_names
       },
 
       resize: function(width, height) {
@@ -199,10 +202,8 @@ HTMLWidgets.widget({
 		    .attr("width", size)
 		    .attr("height", size)
 		  
-		 // recreate scaling factors
-		 var x = d3.scaleLinear()
-		          .domain([-1*maxDistance, maxDistance])
-		          .range([0, size]);
+		  // update range for scaling factor
+		  x.range([0, size]);
 		  
 		  d3.select('g').selectAll("text")
 		  	.attr('x', function(d,i) {return x(result[d]['x'] + 5) ; })
@@ -211,10 +212,12 @@ HTMLWidgets.widget({
 		  d3.select('g').selectAll("circle")
 		    .attr("cx", function(d,i) { return x(result[d]['x']); })
 		    .attr("cy", function(d,i) { return x(result[d]['y']); })
-				  
+		    .attr("r", 0.2 * size/20)
+		  
 		  d3.select('g').selectAll("ellipse")
-		    .attr("cx", function(d) {return (result[data.col_row_names[0]]['x'] + size/2 ); })
-			.attr("cy", function(d) {return (result[data.col_row_names[0]]['y'] + size/2 ); })
+		    .attr("cx", function(d) {return (result[focus_point]['x'] + size/2 ); })
+			.attr("cy", function(d) {return (result[focus_point]['y'] + size/2 ); })
+		    .attr()
       }
 
     };
