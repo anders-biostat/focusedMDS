@@ -78,7 +78,6 @@ HTMLWidgets.widget({
 			 var chart_container = table.append('tr')
 		  
 			 var chart = chart_container.append('td')
-				 .style('vertical-align','text-top')
 			 	 .append('svg:svg')
   			 	 	 .attr('width', size )
 			 	 	 .attr('height', size )
@@ -95,22 +94,31 @@ HTMLWidgets.widget({
 			 // Create div for sidebar stuff and append to el
 			 
 			 var chart_sidebar = chart_container.append('td')
-			         .attr('id', 'chart_sidebar')
-			       //.attr('width', )
+			      .style('vertical-align', 'top')
+				     .attr('id', 'chart_sidebar')
+			         .attr('width', size/3 )
 			 
 			 var button = chart_sidebar.append('input')
-			     .attr()
-			 var buttons = chart_sidebar.append('svg')
-			     .style('vertical-align','text-top')
-			 	     .attr('id', 'buttons')
+			     .style('vertical-align', 'top')
+				     .attr('type', 'checkbox')
+			         .property('checked', false)
 			 
+			 chart_sidebar.select('input').on('change', function(d){ 
+				 if (button.property('checked') == true) { 
+					 g.selectAll('text')
+					     .style('visibility', 'visible')
+				 } else { 
+					 g.selectAll('text')
+			 			 .style('visibility', 'hidden')
+			 	 }
+			 })
 			 
-			 var textButton = buttons.append('rect')
-			         .attr('width', 100)
-			         .attr('height', 30)
-			         .attr('fill', 'cornflowerblue')
-			         .on('click', alert('Clicked!'))
-			         .text('Show All Text')
+			 var text = chart_sidebar.append('text')
+			     .text('Show all labels')
+			     .style('font-family', 'Georgia, serif')
+			 
+			 chart_sidebar.append('br')
+			 
 
 			 // Create grid ellipses
 			 ellipse_coords = {
@@ -174,15 +182,23 @@ HTMLWidgets.widget({
 			 					   return function(t) { return x( rTween(t) * sin( phiTween(t) ) )}
 			 				   })
 			 				   .attr("fill", function(d,i) { return color_object[d]['col']})
-			 			   	   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "magenta"}})
+			 			   	   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "red"}})
 	   
 			 			   // update text locations
 			 			   g.selectAll("text")
 			 			   	   .data(data.col_row_names)
 			 			       .transition()
 			 				   .duration(3000)
-			 	  	  		   .attr('x', function(d,i) {return x(result_univ[d]['x'] + 5); })
-			 				   .attr('y', function(d,i) {return x(result_univ[d]['y']); })
+			 			       .attrTween("x", function(d,i) {
+			 					   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result_univ[d].phi] )
+			 					   var rTween = d3.scaleLinear().range( [old_result[d].r, result_univ[d].r] )
+			 					   return function(t) { return x( rTween(t) * cos( phiTween(t) ) + 5)}
+			 				   })
+			 				   .attrTween("y", function(d,i) {
+			 					   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result_univ[d].phi] )
+			 					   var rTween = d3.scaleLinear().range( [old_result[d].r, result_univ[d].r] )
+			 					   return function(t) { return x( rTween(t) * sin( phiTween(t) ) )}
+			 				   })
 			 				   .text( function (d) {return d })
 	   
 			 		 	 })
@@ -192,8 +208,10 @@ HTMLWidgets.widget({
 			 				     .style("visibility","visible")
 			 		     })
 			 	         .on("mouseout", function(d){
-			  			     d3.select("text#X"+d)
-			 			  	     .style("visibility","hidden")
+							 if( button.property('checked') == false ){
+			  			         d3.select("text#X"+d)
+			 			  	         .style("visibility","hidden")
+							 } 
 			 		     })
 			 		     ;
 	 
