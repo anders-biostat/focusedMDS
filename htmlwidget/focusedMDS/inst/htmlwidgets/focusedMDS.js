@@ -36,6 +36,7 @@ HTMLWidgets.widget({
 	  var x = {};
 	  var col_row_names = {};
 	  var focus_point = [];
+	  var ellipse_coords = {};
 
     return {
 
@@ -69,26 +70,55 @@ HTMLWidgets.widget({
 			          .range([0, size]);
 				  
 			 // Create svg and append to a div
+		     
+		     var table = d3.select(el)
+				 .append('table')
+				 .attr('id', 'table')
+					  
+			 var chart_container = table.append('tr')
 		  
-			 var chart = d3.select(el)
+			 var chart = chart_container.append('td')
+				 .style('vertical-align','text-top')
 			 	 .append('svg:svg')
-			 	 .attr('width', size )
-			 	 .attr('height', size )
-			 	 .attr('class', 'chart')
-			 	 .attr('id', 'chart_svg');
-
+  			 	 	 .attr('width', size )
+			 	 	 .attr('height', size )
+			 	 	 .attr('class', 'chart')
+			 	 	 .attr('id', 'chart_svg')
+					  
 			 var main = chart.append('g')
-			 	 .attr('width', size)
-			 	 .attr('height', size)
-			 	 .attr('class', 'main');
+			 	     .attr('width', size)
+			 	     .attr('height', size)
+			 	     .attr('class', 'main');
 
 			 var g = main.append("svg:g");
+			 
+			 // Create div for sidebar stuff and append to el
+			 
+			 var chart_sidebar = chart_container.append('td')
+			         .attr('id', 'chart_sidebar')
+			       //.attr('width', )
+			 
+			 var button = chart_sidebar.append('input')
+			     .attr()
+			 var buttons = chart_sidebar.append('svg')
+			     .style('vertical-align','text-top')
+			 	     .attr('id', 'buttons')
+			 
+			 
+			 var textButton = buttons.append('rect')
+			         .attr('width', 100)
+			         .attr('height', 30)
+			         .attr('fill', 'cornflowerblue')
+			         .on('click', alert('Clicked!'))
+			         .text('Show All Text')
 
 			 // Create grid ellipses
-			 var ellipse_coords = {
-			 	rx: [50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000],
-			 	ry: [50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000]	
-			 }
+			 ellipse_coords = {
+				 rx: [ size/8 , size/4 , 3*size/8 , size/2, 5*size/8, 3*size/4 , 7*size/8 , size], 
+			 	 ry: [ size/8 , size/4 , 3*size/8 , size/2, 5*size/8, 3*size/4 , 7*size/8 , size]
+			 		}
+			 
+			 
 
 			 g.selectAll("ellipse")
 			     .data(data.col_row_names)
@@ -189,10 +219,15 @@ HTMLWidgets.widget({
       },
 
       resize: function(width, height) {
-
+		  
 		  if(width > height) {
 		  	var size = height
 		  } else { var size = width}
+		  
+		  ellipse_coords = {
+			 rx: [ size/8 , size/4 , 3*size/8 , size/2, 5*size/8, 3*size/4 , 7*size/8 , size], 
+		 	 ry: [ size/8 , size/4 , 3*size/8 , size/2, 5*size/8, 3*size/4 , 7*size/8 , size]
+		 		}
 		  
 		  d3.select(el).select("svg")
 		    .attr("width", size)
@@ -217,7 +252,9 @@ HTMLWidgets.widget({
 		  d3.select('g').selectAll("ellipse")
 		    .attr("cx", function(d) {return (result[focus_point]['x'] + size/2 ); })
 			.attr("cy", function(d) {return (result[focus_point]['y'] + size/2 ); })
-		    .attr()
+	        .attr("rx", function(d,i) {return ( ellipse_coords['rx'][i]); })
+	        .attr("ry", function(d,i) {return ( ellipse_coords['ry'][i]); })
+		  
       }
 
     };
