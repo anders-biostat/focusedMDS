@@ -37,6 +37,7 @@ HTMLWidgets.widget({
 	  var col_row_names = {};
 	  var focus_point = [];
 	  var ellipse_coords = {};
+	  var sliderPosition = null;
 
     return {
 
@@ -70,15 +71,13 @@ HTMLWidgets.widget({
 			          .range([0, size]);
 				  
 			 // Create svg and append to a div
-		     
-		     var table = d3.select(el)
-				 .append('table')
-				 .attr('id', 'table')
 					  
-			 var chart_container = table.append('tr')
+			 var chart_container = d3.select(el)
+				 .append('div')
+			     .attr('id', 'chart_container')
+				 //.style('position')
 		  
-			 var chart = chart_container.append('td')
-			 	 .append('svg:svg')
+			 var chart = chart_container.append('svg:svg')
   			 	 	 .attr('width', size )
 			 	 	 .attr('height', size )
 			 	 	 .attr('class', 'chart')
@@ -93,17 +92,22 @@ HTMLWidgets.widget({
 			 
 			 // Create div for sidebar stuff and append to el
 			 
-			 var chart_sidebar = chart_container.append('td')
-			      .style('vertical-align', 'top')
-				     .attr('id', 'chart_sidebar')
-			         .attr('width', size/3 )
+			 var chart_inset = d3.select(el)
+			      .append('div')
+			      .style('text-align', 'center')
+			      .style('position', 'absolute')
+			      .style('top', '20px')
+			      .style('left', '0')
+				     .attr('id', 'chart_inset')
+			         .attr('height', 140)
+			         .attr('width', 61)
 			 
-			 var button = chart_sidebar.append('input')
-			     .style('vertical-align', 'top')
+			 var button = chart_inset.append('input')
+			     //.style('vertical-align', 'top')
 				     .attr('type', 'checkbox')
 			         .property('checked', false)
 			 
-			 chart_sidebar.select('input').on('change', function(d){ 
+			 chart_inset.select('input').on('change', function(d){ 
 				 if (button.property('checked') == true) { 
 					 g.selectAll('text')
 					     .style('visibility', 'visible')
@@ -113,12 +117,77 @@ HTMLWidgets.widget({
 			 	 }
 			 })
 			 
-			 var text = chart_sidebar.append('text')
-			     .text('Show all labels')
+			 var text = chart_inset.append('text')
+			     .text(' Show all labels')
 			     .style('font-family', 'Georgia, serif')
+			     .style('font-size', '14px')
 			 
-			 chart_sidebar.append('br')
+			 chart_inset.append('br')
 			 
+			 chart_inset.append('text')
+			     .text('Adjust circle size:')
+			     .style('font-family', 'Georgia, serif')
+			     .style('font-size', '14px')
+			 
+			 chart_inset.append('br')
+			 
+			 var sliderContainer = chart_inset.append('svg')
+			     .attr('height',20)
+			     .attr('width', 140)
+			 
+			 var slider = sliderContainer.append('g')
+			     .attr('class', 'slider')
+			     .attr('width', 150)
+			 
+			 slider.append('line')
+			           .attr('class', 'track')
+			           .attr('y1', 10)
+			           .attr('y2', 10)
+			           .attr('x1', 10)
+			           .attr('x2', 130)
+			           .style('stroke-linecap', 'round')
+			           .style('stroke-opacity', 0.3)
+			           .style('stroke-width', '8px')
+			           .style('stroke', '#000')
+			     .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+			           .attr('class', 'track-inset')
+			           .style('stroke-linecap', 'round')
+			           .style('stroke', '#ddd')
+			           .style('stroke-width', '6px')
+			     .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+			           .attr('class', 'track-overlay')
+			           .style('stroke-linecap','round')
+			           .style('pointer-events', 'stroke')
+			           .style('stroke-width', '20px')
+			           .style('cursor', 'crosshair')
+			           .call(d3.drag()
+		                       .on('start.interrupt', function() { slider.interrupt(); })
+		 				       .on('start.drag', function() { sizeAdjust(d3.event.x); }))
+			 
+			 var handle = slider.insert('circle', '.track-overlay')
+			           .attr('class','handle')
+			           .attr('r', 5)
+			           .attr('cx', 65)
+			           .attr('cy', 10)
+			           .style('fill', '#fff')
+			           .style('stroke', '#000')
+			           .style('stroke-opacity', '0.5')
+			           .style('stroke-width', '1.25px')	
+			 
+			 function sizeAdjust(input) {
+				 if(input < 10){
+				 	handle.attr('cx', 10)
+				 } else if(input > 130){
+				 	handle.attr('cx', 130)
+				 } else {
+				 	handle.attr('cx', input)
+				 };
+				 
+				 g.selectAll('circle')
+				     .attr('r', 0.2 * size/20 * input/65 );
+				 
+				 sliderPosition = input;
+			 }	 
 
 			 // Create grid ellipses
 			 ellipse_coords = {
@@ -126,8 +195,6 @@ HTMLWidgets.widget({
 			 	 ry: [ size/8 , size/4 , 3*size/8 , size/2, 5*size/8, 3*size/4 , 7*size/8 , size]
 			 		}
 			 
-			 
-
 			 g.selectAll("ellipse")
 			     .data(data.col_row_names)
 			 	.enter().append("ellipse")
@@ -137,7 +204,7 @@ HTMLWidgets.widget({
 			         .attr("ry", function(d,i) {return ( ellipse_coords['ry'][i]); })
 			 		 .attr("fill", "none")
 			 		 .attr("stroke","gray")
-
+			 
 			 // Create scatterplot circles with clickable reordering
 			 g.selectAll("circle")
 			     .data(data.col_row_names)
@@ -146,7 +213,7 @@ HTMLWidgets.widget({
 			 		   .attr("cy", function(d,i) { return x(result_univ[d]['y']); })
 			 		   .attr("r", 0.2 * size/20)
 			           .attr("fill", function(d,i) { return color_object[d]['col']})
-			 		   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "magenta"}})  
+			 		   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "red"}})  
 			 		   .on( "dblclick", function(d,i) {
 	  
 			 			   //rerun focused MDS, find new maxDistance
@@ -234,6 +301,7 @@ HTMLWidgets.widget({
 			 					 .style("visibility","hidden") 
 			result = result_univ 
 			col_row_names = data.col_row_names
+			console.log(sliderPosition)
       },
 
       resize: function(width, height) {
@@ -261,11 +329,12 @@ HTMLWidgets.widget({
 		  d3.select('g').selectAll("text")
 		  	.attr('x', function(d,i) {return x(result[d]['x'] + 5) ; })
 		    .attr('y', function(d,i) {return x(result[d]['y']); })
-		  
+		  console.log(sliderPosition)
 		  d3.select('g').selectAll("circle")
 		    .attr("cx", function(d,i) { return x(result[d]['x']); })
 		    .attr("cy", function(d,i) { return x(result[d]['y']); })
-		    .attr("r", 0.2 * size/20)
+		  .attr("r", function() { if(sliderPosition == null) {return 0.2 * size/20 } 
+		  else { return 0.2 * size/20 * sliderPosition/65 } })
 		  
 		  d3.select('g').selectAll("ellipse")
 		    .attr("cx", function(d) {return (result[focus_point]['x'] + size/2 ); })
