@@ -5,6 +5,7 @@ library(Biobase)
 library(pheatmap)
 library(rje)
 library(MASS)
+library(smacof)
 
 ## MM data
 
@@ -24,8 +25,9 @@ hcl <- hclust(as.dist(dis))
 plot(hcl)
 cutree(hcl,k=5)
 
-pheatmap( tab, col=cubeHelix(100), cluster_cols = hcl )
-pheatmap( dis, col=rev(cubeHelix(100)), cluster_col=hcl, cluster_row=hcl )
+pheatmap( tab, col=cubeHelix(100), cluster_cols = hcl)
+pheatmap( dis, col=rev(cubeHelix(100)), cluster_col=hcl, cluster_row=hcl, 
+          labels_row = rep("", nrow(dis)), labels_col =  rep("", ncol(dis)) )
 
 pmap.clust <- as.data.frame(cutree(hcl,k=5))
 
@@ -40,6 +42,38 @@ colors3[colors3 == "4"] <- "darkgreen"
 colors3[colors3 == "5"] <- "gold"
 
 toJSON(colors3)
+
+# Creating items for htmlwidget testing
+col_row_names <- row.names(pmap.clust)
+
+setwd("/Users/admin/Documents/Rotation1_AndersLab/git@github.com:anders-biostat/focused-mds.git/focused-mds")
+devtools::install("focusedMDS")
+library(focusedMDS)
+focusedMDS(dis, col_row_names, colors3)
+
+# Shepard plot for comparing dis matrix distances vs 2D distances in plot
+dis2 <- dis
+
+dis2[27,86] <- 0.000000000000000000000001
+dis2[86,27] <- 0.000000000000000000000001
+
+mm_isoMDS <- isoMDS(dis2)
+plot(mm_isoMDS$points)
+mm_isoMDS_dis <- as.matrix(dist(mm_isoMDS$points))
+
+#public install
+devtools::install_github("anders-biostat/focused-mds/focusedMDS")
+
+# DIY shepard plot
+plot(as.vector(dis2), as.vector(mm_isoMDS_dis), pch= ".",
+     main = "Shepard plot of real vs plot distances",
+     xlab = "Distance matrix distances",
+     ylab = "Distances on 2D plane")
+lines(x = c(0,175), y = c(0,175), col="darkgrey", lwd= 2)
+
+plot(mm_isoMDS)
+
+
 
 # Focused MDS function, where the input is the matrix and the point clicked by the user
 
@@ -141,12 +175,13 @@ for (i in 1:nrow(dis)) {
 dis1 <- dis
 dis1[dis1 == 0] <- 0.001
 
-iso_res <- as.data.frame(isoMDS(dis1, k=2))
+iso_res <- as.data.frame(isoMDS(dis2, k=2))
 
 x <- iso_res$points.1
 y <- iso_res$points.2
 
 colors2 <- pmap.clust[match(row.names(iso_res), row.names(pmap.clust)),]
 png(filename="isoMDS_plot.png", height =6, width=6, units="in", res=300 )
-plot(x,y, main= "isoMDS Plot", col= colors2)
+plot(x,y, main= "isoMDS Plot", col= colors3, pch= 16,
+     xlab = NA, ylab = NA)
 dev.off()

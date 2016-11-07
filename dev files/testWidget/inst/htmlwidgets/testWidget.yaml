@@ -1,0 +1,10 @@
+# (uncomment to add a dependency)
+ dependencies:
+  - name: test
+    version: 0.0
+    src: htmlwidgets/lib/testWidget_v0.0
+    script: test_widget.js
+  - name: D3
+    version: 4.2.7
+    src: htmlwidgets/lib/D3_v4.2.7
+    script: d3.js

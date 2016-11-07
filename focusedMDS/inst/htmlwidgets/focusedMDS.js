@@ -94,15 +94,34 @@ HTMLWidgets.widget({
 			 
 			 var chart_inset = d3.select(el)
 			      .append('div')
-			      .style('text-align', 'center')
 			      .style('position', 'absolute')
 			      .style('top', '20px')
 			      .style('left', '0')
 				     .attr('id', 'chart_inset')
-			         .attr('height', 140)
-			         .attr('width', 61)
+			         .attr('height', 61)
+			         .attr('width', 140)
 			 
-			 var button = chart_inset.append('input')
+			 var chart_background = chart_inset.append('svg')
+			      .style('position', 'relative')
+			      .style('z-index', 1)
+			      .style('top', '0')
+			      .style('left', '0')
+			         .attr('height', 61)
+			         .attr('width', 140)
+			 
+			 chart_background.append('rect')
+			      .attr('fill', 'white')
+			      .attr('height', 61)
+			      .attr('width', 140)
+			 
+			 var button_div = chart_inset.append('div')
+			      .style('text-align', 'left')
+			      .style('position', 'absolute')
+			      .style('z-index', 2)
+			      .style('top', 0)
+			      .style('left', 0)
+			 
+			 var button = button_div.append('input')
 			     //.style('vertical-align', 'top')
 				     .attr('type', 'checkbox')
 			         .property('checked', false)
@@ -117,21 +136,26 @@ HTMLWidgets.widget({
 			 	 }
 			 })
 			 
-			 var text = chart_inset.append('text')
+			 var text = button_div.append('text')
 			     .text(' Show all labels')
 			     .style('font-family', 'Georgia, serif')
 			     .style('font-size', '14px')
 			 
-			 chart_inset.append('br')
 			 
-			 chart_inset.append('text')
-			     .text('Adjust circle size:')
+			 var slider_div = chart_inset.append('div')
+			     .style('text-align', 'center')
+			      .style('position', 'absolute')
+			      .style('z-index', 2)
+			      .style('top', '20px')
+			      .style('left', 0)
+			 
+			 slider_div.append('text')
+			     .text('Circle size:')
 			     .style('font-family', 'Georgia, serif')
 			     .style('font-size', '14px')
 			 
-			 chart_inset.append('br')
 			 
-			 var sliderContainer = chart_inset.append('svg')
+			 var sliderContainer = slider_div.append('svg')
 			     .attr('height',20)
 			     .attr('width', 140)
 			 
