@@ -1,10 +1,8 @@
 // This function is written to be used with the focused_mds R htmlWidget
-
+// FIXME make better variable names
 function focused_mds(dis, col_row_names, focus_point) {
     // Initializing variables and defining functions
     function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
-    function add(a,b) {return a + b;}
-    function repeat(str, num) {return (new Array(num+1)).join(str);}
 	var cos = Math.cos
 	var sin = Math.sin
 	var abs = Math.abs
@@ -76,6 +74,7 @@ function focused_mds(dis, col_row_names, focus_point) {
 	sorted_object[names[1]].y = sorted_object[names[1]].r * sin(sorted_object[names[1]].phi);
 	
 	// using univariate optimization to calculate the rest
+	//FIXME change i to new_point
 	for(var i = 2; i < names.length; i++) {
 		sorted_object[names[i]].phi = optimize_js(0, Math.PI*2, stress, 0.001);
 	

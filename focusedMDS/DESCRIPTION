@@ -1,9 +1,9 @@
 Package: focusedMDS
 Title: Focused, interactive multidimensional scaling
-Version: 0.0.0.9000
+Version: 1.0
 Authors@R: c(person("Lea", "Urpa", email = "lea.urpa@helsinki.fi", role = c("aut", "cre")), person("Simon", "Anders", email = "simon.anders@helsinki.fi", role = "aut"))
 Description: Interactive multidimensional scaling. The user chooses a particular data point (the focus), around which all other points are plotted in their exact distances to the focus given in the distance matrix. The distances of the non-focus points are then plotted as close to their ideal distances as possible. The user can chose another focus, and the graph will rearrange to reflect the distances to the new focus. 
 Depends: R (>= 3.3.1)
-License: What license is it under?
+License: GNU General Public License
 Encoding: UTF-8
 LazyData: true

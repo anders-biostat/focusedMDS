@@ -8,16 +8,17 @@ HTMLWidgets.widget({
 	  
 	  // This function creates the indexable color_object from the user input of 
 	  // an array of names and an array of colors in the same order as those names
-
-	  function createColorObject(col_row_names, color_array){
+	  //FIXME This object doesn't need the col id, only the point: "color" structure.
+	  function createColorObject(col_row_names, colors){
 	  	var color_object = {};
 	  	for(var i=0; i < color_array.length; i++) {
 	  		color_object[col_row_names[i]] = {
-	  			col: color_array[i]
+	  			col: colors[i]
 	  		}
 	  	};
 	  	return color_object;
 	  };
+	  
 	  function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
 	  function add(a,b) {return a + b;}
 	  function repeat(str, num) {return (new Array(num+1)).join(str);}
@@ -29,13 +30,13 @@ HTMLWidgets.widget({
 	  if(width > height) {
 	  	var size = height
 	  } else { var size = width}
-	  
+	  //FIXME make sure you need all these
 	  // Initialize objects
 	  var old_result = {};
 	  var result = {};
 	  var x = {};
 	  var col_row_names = {};
-	  var focus_point = [];
+	  var focus_point = "__none__";
 	  var ellipse_coords = {};
 	  var sliderPosition = null;
 
@@ -43,11 +44,13 @@ HTMLWidgets.widget({
 
 	  renderValue: function(data) {
 		     focus_point = data.col_row_names[0]
-		     
+		     // FIXME pull the function here, you only use it once, also rename it to a map not an object
 		     var color_object = createColorObject(data.col_row_names, data.color_array);
-			 
+			 // FIXME can rename to univ
 		     var result_univ = focused_mds(data.dis, data.col_row_names, data.col_row_names[0])
 			 
+			 
+			 //FIXME 
 			 // Find max distance in dis for scaling factor functions
 			 var max_array = [];
 			 for(var i=0; i< data.dis.length; i++) {
@@ -66,6 +69,7 @@ HTMLWidgets.widget({
 			 } else { maxDistance = max_r}
 		  
 			 // Create scaling factors
+			 //FIXME rename x variable
 			 x = d3.scaleLinear()
 			          .domain([-1*maxDistance, maxDistance])
 			          .range([0, size]);
@@ -214,11 +218,12 @@ HTMLWidgets.widget({
 			 }	 
 
 			 // Create grid ellipses
+			 //FIXME seq 1:8 * size 
 			 ellipse_coords = {
 				 rx: [ size/8 , size/4 , 3*size/8 , size/2, 5*size/8, 3*size/4 , 7*size/8 , size], 
 			 	 ry: [ size/8 , size/4 , 3*size/8 , size/2, 5*size/8, 3*size/4 , 7*size/8 , size]
 			 		}
-			 
+			 // FIXME change these to actually be circles, and add labels to reference later
 			 g.selectAll("ellipse")
 			     .data(data.col_row_names)
 			 	.enter().append("ellipse")
