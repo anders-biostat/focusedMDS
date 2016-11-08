@@ -95,7 +95,7 @@ HTMLWidgets.widget({
 			 var chart_inset = d3.select(el)
 			      .append('div')
 			      .style('position', 'absolute')
-			      .style('top', '20px')
+			      .style('top', '0')
 			      .style('left', '0')
 				     .attr('id', 'chart_inset')
 			         .attr('height', 61)
@@ -235,7 +235,7 @@ HTMLWidgets.widget({
 			     .enter().append("circle")
 			 		   .attr("cx", function(d,i) { return x(result_univ[d]['x']); })
 			 		   .attr("cy", function(d,i) { return x(result_univ[d]['y']); })
-			 		   .attr("r", 0.2 * size/20)
+			 		   .attr("r", function() {console.log(0.2 * size/20); return 0.2 * size/20; })
 			           .attr("fill", function(d,i) { return color_object[d]['col']})
 			 		   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "red"}})  
 			 		   .on( "dblclick", function(d,i) {
@@ -357,8 +357,8 @@ HTMLWidgets.widget({
 		  d3.select('g').selectAll("circle")
 		    .attr("cx", function(d,i) { return x(result[d]['x']); })
 		    .attr("cy", function(d,i) { return x(result[d]['y']); })
-		  .attr("r", function() { if(sliderPosition == null) {return 0.2 * size/20 } 
-		  else { return 0.2 * size/20 * sliderPosition/65 } })
+		  .attr("r", function() { if(sliderPosition == null) { console.log(0.2 * size/20); return 0.2 * size/20 } 
+		  else { console.log(0.2 * size/20 * sliderPosition/65 ); return 0.2 * size/20 * sliderPosition/65 } })
 		  
 		  d3.select('g').selectAll("ellipse")
 		    .attr("cx", function(d) {return (result[focus_point]['x'] + size/2 ); })
