@@ -1,6 +1,6 @@
 // This function is written to be used with the focused_mds R htmlWidget
-// FIXME make better variable names
-function focused_mds(dis, col_row_names, focus_point) {
+
+function focused_mds(distances, ids, focus_point) {
     // Initializing variables and defining functions
     function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
 	var cos = Math.cos
@@ -8,26 +8,26 @@ function focused_mds(dis, col_row_names, focus_point) {
 	var abs = Math.abs
 	
 	// call distances for focus_point
-	var dists = dis[col_row_names.indexOf(focus_point)];
+	var focus_dists = distances[ids.indexOf(focus_point)];
 	
 	// zip together in an array of arrays the names and distances
-	var names_dists = col_row_names.map(function(e,i){
-		return [e, dists[i]];
+	var names_dists = ids.map(function(e,i){
+		return [e, focus_dists[i]];
 	});
 	
 	// sort the array by the distances
 	names_dists.sort(function(a,b){
 		return a[1] - b[1];
 	});
-	
+
 	// return index of names in order of distance from focus point 
-	var names = [];
+	var ids_ordered = [];
 	for (i in names_dists){ names.push(names_dists[i][0]); };
 	
 	// create an indexable object from these sorted ids and distances
-	var sorted_object = {};
-	for(var i=0; i< col_row_names.length; i++) {
-		sorted_object[names_dists[i][0]] = {
+	var result = {};
+	for(var i=0; i< ids.length; i++) {
+		result[names_dists[i][0]] = {
 			r: names_dists[i][1],
 			phi: [],
 			x: [],
@@ -35,26 +35,27 @@ function focused_mds(dis, col_row_names, focus_point) {
 		}
 	};
 	
-	// Define the stress function 
+	// Define the stress function
+	// This function, to be optimized on, needs only one input (phi)
+	// It finds new_point from the for loop environment defined below
 	
 	function stress(phi) {
 		var stress = 0;
-		var new_point=i;
 		//position of the new point, given the candidate phi
-		var xnew = sorted_object[names[new_point]].r * cos(phi);
-		var ynew = sorted_object[names[new_point]].r * sin(phi);
+		var xnew = result[ids_ordered[new_point]].r * cos(phi);
+		var ynew = result[ids_ordered[new_point]].r * sin(phi);
 	
 		for(j=0; j < new_point; j++ ) {
 			//position of the point we are comparing to new point
-			var xj = sorted_object[names[j]].x;
-			var yj = sorted_object[names[j]].y;
+			var xj = result[ids_ordered[j]].x;
+			var yj = result[ids_ordered[j]].y;
 		
 			//index of column names of matrix, in ORIGINAL order
-			var dij_col = col_row_names.indexOf(names[new_point]);
-			var dij_row = col_row_names.indexOf(names[j]);
+			var dij_col = ids.indexOf(ids_ordered[new_point]);
+			var dij_row = ids.indexOf(ids_ordered[j]);
 		
 			// actual distance given by dis matrix
-			var dij = dis[dij_col][dij_row];
+			var dij = distances[dij_col][dij_row];
 			
 			// calculated distance, given where we placed the point
 			var Dij = Math.sqrt( sqr((xnew - xj)) + sqr((ynew - yj)) );
@@ -65,22 +66,21 @@ function focused_mds(dis, col_row_names, focus_point) {
 	};
 	
 	// setting phi, xy coords, and colors for first two points
-	sorted_object[names[0]].phi = 0;
-	sorted_object[names[0]].x = 0;
-	sorted_object[names[0]].y = 0;
+	result[ids_ordered[0]].phi = 0;
+	result[ids_ordered[0]].x = 0;
+	result[ids_ordered[0]].y = 0;
 
-	sorted_object[names[1]].phi = 3*Math.PI/2;
-	sorted_object[names[1]].x = sorted_object[names[1]].r * cos(sorted_object[names[1]].phi);
-	sorted_object[names[1]].y = sorted_object[names[1]].r * sin(sorted_object[names[1]].phi);
+	result[ids_ordered[1]].phi = 3*Math.PI/2;
+	result[ids_ordered[1]].x = result[ids_ordered[1]].r * cos(result[ids_ordered[1]].phi);
+	result[ids_ordered[1]].y = result[ids_ordered[1]].r * sin(result[ids_ordered[1]].phi);
 	
-	// using univariate optimization to calculate the rest
-	//FIXME change i to new_point
-	for(var i = 2; i < names.length; i++) {
-		sorted_object[names[i]].phi = optimize_js(0, Math.PI*2, stress, 0.001);
+	// use univariate optimization to calculate the rest
+	for(var new_point = 2; new_point < ids_ordered.length; new_point++) {
+		result[ids_ordered[new_point]].phi = optimize_js(0, Math.PI*2, stress, 0.001);
 	
-		sorted_object[names[i]].x = sorted_object[names[i]].r * cos(sorted_object[names[i]].phi);
-		sorted_object[names[i]].y = sorted_object[names[i]].r * sin(sorted_object[names[i]].phi);
+		result[ids_ordered[new_point]].x = result[ids_ordered[new_point]].r * cos(result[ids_ordered[new_point]].phi);
+		result[ids_ordered[new_point]].y = result[ids_ordered[new_point]].r * sin(result[ids_ordered[new_point]].phi);
 	};
 	
-	return sorted_object;
+	return result;
 };

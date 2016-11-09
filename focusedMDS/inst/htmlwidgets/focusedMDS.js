@@ -1,3 +1,5 @@
+Names of variables: distances, colors, ids, graph
+
 HTMLWidgets.widget({
 
   name: 'focusedMDS',
@@ -9,8 +11,8 @@ HTMLWidgets.widget({
 	  function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
 	  function add(a,b) {return a + b;}
 	  function repeat(str, num) {return (new Array(num+1)).join(str);}
-		 var cos = Math.cos
-		 var sin = Math.sin
+	  var cos = Math.cos
+	  var sin = Math.sin
 	  var abs = Math.abs
 	  
 	  // Find the bigger, height or width, and set to size, to maintain aspect ratio
@@ -29,39 +31,28 @@ HTMLWidgets.widget({
     return {
 
 	  renderValue: function(data) {
-		     focus_point = data.col_row_names[0]
-		     // FIXME pull the function here, you only use it once, also rename it to a map not an object
-		     var color_object = createColorObject(data.col_row_names, data.color_array);
+		     focus_point = data.ids[0]
+		     
 	 	  	 var color_object = {};
 	 	  	 for(var i=0; i < colors.length; i++) {
-	 	  	 	 color_object[col_row_names[i]] = colors[i]
+	 	  	 	 color_object[ids[i]] = colors[i]
 	 	  	 };
 			 
-			 // FIXME can rename to univ
-		     var result = focused_mds(data.dis, data.col_row_names, data.col_row_names[0])
+		     var result = focused_mds(data.distances, data.ids, focus_point)
 			 
+			 // Find max distance in dist for scaling factor functions
+			 var maxDistance = [];
 			 
-			 //FIXME 
-			 // Find max distance in dis for scaling factor functions
-			 var max_array = [];
-			 for(var i=0; i< data.dis.length; i++) {
-			  	max_array.push(Math.max.apply(null, data.dis[i]))
+			 for(var i=0; i< data.distances.length; i++) {
+			 	 for(j=0; j< data.distances.length; j++){
+					 if( maxDistance < distances[i][j]){
+					 	maxDistance = distances[i][j]
+					 }
+				 }
 			 };
-			 var max_r = Math.max.apply(null, max_array);
-
-			 var min_array = [];
-			 for(var i=0; i< data.dis.length; i++){
-			  min_array.push(Math.min.apply(null, data.dis[i]))
-			 };
-			 var min_r = Math.min.apply(null, min_array);
-
-			 if (abs(min_r) > abs(max_r)) {
-			  maxDistance = abs(min_r)
-			 } else { maxDistance = max_r}
 		  
 			 // Create scaling factors
-			 //FIXME rename x variable
-			 x = d3.scaleLinear()
+			 scale = d3.scaleLinear()
 			          .domain([-1*maxDistance, maxDistance])
 			          .range([0, size]);
 				  
@@ -208,37 +199,30 @@ HTMLWidgets.widget({
 				 sliderPosition = input;
 			 }	 
 
-			 // Create grid ellipses
-			 //FIXME seq 1:8 * size 
-			 ellipse_coords = {
-				 rx: [ size/8 , size/4 , 3*size/8 , size/2, 5*size/8, 3*size/4 , 7*size/8 , size], 
-			 	 ry: [ size/8 , size/4 , 3*size/8 , size/2, 5*size/8, 3*size/4 , 7*size/8 , size]
-			 		}
-			 // FIXME change these to actually be circles, and add labels to reference later
+			 // Create polar coordinate gridline radii
+			 gridlines_rs = [];
+			 for(var i=1; i != 9; ++i) { gridlines_rs.push(i/8 *size) }
+			 
 			 g.selectAll("ellipse")
-			     .data(data.col_row_names)
-			 	.enter().append("ellipse")
-			 	     .attr("cx", function(d) {return (result[data.col_row_names[0]]['x'] + size/2 ); })
-			         .attr("cy", function(d) {return (result[data.col_row_names[0]]['y'] + size/2 ); })
-			         .attr("rx", function(d,i) {return ( ellipse_coords['rx'][i]); })
-			         .attr("ry", function(d,i) {return ( ellipse_coords['ry'][i]); })
+			 	.enter().append("circle")
+					 .attr("id", "polar_gridlines")
+			 	     .attr("cx", function() {return (result[data.ids[0]]['x'] + size/2 ); })
+			         .attr("cy", function() {return (result[data.ids[0]]['y'] + size/2 ); })
+			         .attr("r", function(i) {return ( gridlines_rs[i]); })
 			 		 .attr("fill", "none")
 			 		 .attr("stroke","gray")
 			 
 			 // Create scatterplot circles with clickable reordering
 			 g.selectAll("circle")
-			     .data(data.col_row_names)
+			     .data(data.ids)
 			     .enter().append("circle")
-			 		   .attr("cx", function(d,i) { return x(result[d]['x']); })
-			 		   .attr("cy", function(d,i) { return x(result[d]['y']); })
+					   .attr("id", "data_points")
+			 		   .attr("cx", function(d,i) { return scale(result[d]['x']); })
+			 		   .attr("cy", function(d,i) { return scale(result[d]['y']); })
 			 		   .attr("r", function() {console.log(0.2 * size/20); return 0.2 * size/20; })
 			           .attr("fill", function(d,i) { return color_object[d]['col']})
-			 		   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "red"}})  
+			 		   .attr("stroke", function(d,i) { if(Object.keys(result).indexOf(d) == 0) { return "red"}})  
 			 		   .on( "dblclick", function(d,i) {
-	  
-			 			   //rerun focused MDS, find new maxDistance
-			 			   console.log( "You have clicked on point " + d)
-	   
 			 			   // save phis from previous result for arc transition
 			 			   old_result = {};
 			 			   for(var i=0; i< Object.keys(result).length; i++){
@@ -248,43 +232,41 @@ HTMLWidgets.widget({
 			 			   }}
 	   
 			 			   // update result_univ object by rerunning focused_mds
-			 			   result = focused_mds(data.dis, data.col_row_names, d)
-						   result = result
+			 			   result = focused_mds(data.distances, data.ids, d)
 						   focus_point = d
-			 			   console.log(d, ' new result_univ:', result_univ)
 	   
 			 			   // update all circles
-			 			   g.selectAll("circle")
-			 			       .data(data.col_row_names)
+			 			   g.selectAll("#data_points")
+			 			       .data(data.ids)
 			 			       .transition()
 			 			       .duration(3000)
 			 			       .attrTween("cx", function(d,i) {
-			 					   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result_univ[d].phi] )
-			 					   var rTween = d3.scaleLinear().range( [old_result[d].r, result_univ[d].r] )
-			 					   return function(t) { return x( rTween(t) * cos( phiTween(t) ) )}
+			 					   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result[d].phi] )
+			 					   var rTween = d3.scaleLinear().range( [old_result[d].r, result[d].r] )
+			 					   return function(t) { return scale( rTween(t) * cos( phiTween(t) ) )}
 			 				   })
 			 				   .attrTween("cy", function(d,i) {
-			 					   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result_univ[d].phi] )
-			 					   var rTween = d3.scaleLinear().range( [old_result[d].r, result_univ[d].r] )
-			 					   return function(t) { return x( rTween(t) * sin( phiTween(t) ) )}
+			 					   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result[d].phi] )
+			 					   var rTween = d3.scaleLinear().range( [old_result[d].r, result[d].r] )
+			 					   return function(t) { return scale( rTween(t) * sin( phiTween(t) ) )}
 			 				   })
 			 				   .attr("fill", function(d,i) { return color_object[d]['col']})
-			 			   	   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "red"}})
+			 			   	   .attr("stroke", function(d,i) { if(Object.keys(result).indexOf(d) == 0) { return "red"}})
 	   
 			 			   // update text locations
-			 			   g.selectAll("text")
-			 			   	   .data(data.col_row_names)
+			 			   g.selectAll("#textLabels")
+			 			   	   .data(data.ids)
 			 			       .transition()
 			 				   .duration(3000)
 			 			       .attrTween("x", function(d,i) {
-			 					   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result_univ[d].phi] )
-			 					   var rTween = d3.scaleLinear().range( [old_result[d].r, result_univ[d].r] )
-			 					   return function(t) { return x( rTween(t) * cos( phiTween(t) ) + 5)}
+			 					   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result[d].phi] )
+			 					   var rTween = d3.scaleLinear().range( [old_result[d].r, result[d].r] )
+			 					   return function(t) { return scale( rTween(t) * cos( phiTween(t) ) + 5)}
 			 				   })
 			 				   .attrTween("y", function(d,i) {
-			 					   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result_univ[d].phi] )
-			 					   var rTween = d3.scaleLinear().range( [old_result[d].r, result_univ[d].r] )
-			 					   return function(t) { return x( rTween(t) * sin( phiTween(t) ) )}
+			 					   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result[d].phi] )
+			 					   var rTween = d3.scaleLinear().range( [old_result[d].r, result[d].r] )
+			 					   return function(t) { return scale( rTween(t) * sin( phiTween(t) ) )}
 			 				   })
 			 				   .text( function (d) {return d })
 	   
@@ -304,36 +286,30 @@ HTMLWidgets.widget({
 	 
 			 // Add svg text element to g
 			 var text = g.selectAll("text")
-			 	            .data(data.col_row_names)
+			 	            .data(data.ids)
 			 	            .enter()
 			 	            .append("text")
 			 			    .attr("id",function(d){return "X"+d;})
-			 			    .attr("class", "pointlabel");
+			 			    .attr("class", "pointlabel")
+						    .attr("id","textLabels")
 		
 			 // Create text labels	
 			 var textLabels = text
-			 	  	  		     .attr('x', function(d,i) {return x(result_univ[d]['x'] + 5) ; })
-			 					 .attr('y', function(d,i) {return x(result_univ[d]['y']); })
+			 	  	  		     .attr('x', function(d,i) {return scale(result[d]['x'] + 5) ; })
+			 					 .attr('y', function(d,i) {return scale(result[d]['y']); })
 			 					 .text( function (d) {return d })
 			 					 .attr("font-family", "sans-serif")
 			 					 .attr("font-size", "12px")
 			 					 .attr("fill", "black")
 			 					 .style("visibility","hidden") 
-			result = result_univ 
-			col_row_names = data.col_row_names
-			console.log(sliderPosition)
       },
 
       resize: function(width, height) {
 		  
-		  if(width > height) {
-		  	var size = height
-		  } else { var size = width}
+		  var size = width > height ? width : height;
 		  
-		  ellipse_coords = {
-			 rx: [ size/8 , size/4 , 3*size/8 , size/2, 5*size/8, 3*size/4 , 7*size/8 , size], 
-		 	 ry: [ size/8 , size/4 , 3*size/8 , size/2, 5*size/8, 3*size/4 , 7*size/8 , size]
-		 		}
+		  gridlines_rs = [];
+		  for(var i=1; i != 9; ++i) { gridlines_rs.push(i/8 *size) }
 		  
 		  d3.select(el).select("svg")
 		    .attr("width", size)
@@ -344,23 +320,22 @@ HTMLWidgets.widget({
 		    .attr("height", size)
 		  
 		  // update range for scaling factor
-		  x.range([0, size]);
+		  scale.range([0, size]);
 		  
 		  d3.select('g').selectAll("text")
-		  	.attr('x', function(d,i) {return x(result[d]['x'] + 5) ; })
-		    .attr('y', function(d,i) {return x(result[d]['y']); })
+		  	.attr('x', function(d,i) {return scale(result[d]['x'] + 5) ; })
+		    .attr('y', function(d,i) {return scale(result[d]['y']); })
 		  console.log(sliderPosition)
-		  d3.select('g').selectAll("circle")
-		    .attr("cx", function(d,i) { return x(result[d]['x']); })
-		    .attr("cy", function(d,i) { return x(result[d]['y']); })
-		  .attr("r", function() { if(sliderPosition == null) { console.log(0.2 * size/20); return 0.2 * size/20 } 
-		  else { console.log(0.2 * size/20 * sliderPosition/65 ); return 0.2 * size/20 * sliderPosition/65 } })
+		  d3.select('g').selectAll("#data_points")
+		    .attr("cx", function(d,i) { return scale(result[d]['x']); })
+		    .attr("cy", function(d,i) { return scale(result[d]['y']); })
+		    .attr("r", function() { if(sliderPosition == null) { console.log(0.2 * size/20); return 0.2 * size/20 } 
+		    else { console.log(0.2 * size/20 * sliderPosition/65 ); return 0.2 * size/20 * sliderPosition/65 } })
 		  
-		  d3.select('g').selectAll("ellipse")
+		  d3.select('g').selectAll("#polar_gridlines")
 		    .attr("cx", function(d) {return (result[focus_point]['x'] + size/2 ); })
 			.attr("cy", function(d) {return (result[focus_point]['y'] + size/2 ); })
-	        .attr("rx", function(d,i) {return ( ellipse_coords['rx'][i]); })
-	        .attr("ry", function(d,i) {return ( ellipse_coords['ry'][i]); })
+	        .attr("r", function(d,i) {return ( gridlines_rs[i]); })
 		  
       }
 

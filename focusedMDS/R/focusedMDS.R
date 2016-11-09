@@ -7,7 +7,7 @@
 #' @export
 
 # FIXME add input for user to generate xy coords to R instead of graph
-focusedMDS <- function(distances, ids = NULL, colors = NULL,  )  {
+focusedMDS <- function(distances, ids = NULL, colors = NULL, graph = YES )  {
   
   # Run through some if statements to check the input data
   
@@ -29,15 +29,13 @@ focusedMDS <- function(distances, ids = NULL, colors = NULL,  )  {
   
   # create a list that contains the data to feed to JSON
   data = list(
-    distances = distances, ids = ids, colors = colors
+    distances = distances, ids = ids, colors = colors, graph = graph
   )
   
   # create widget
   htmlwidgets::createWidget(
     name = 'focusedMDS',
     data,
-    width = size,
-    height = size,
     package = 'focusedMDS'
   )
 }
