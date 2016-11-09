@@ -6,19 +6,6 @@ HTMLWidgets.widget({
 
   factory: function(el, width, height) {
 	  
-	  // This function creates the indexable color_object from the user input of 
-	  // an array of names and an array of colors in the same order as those names
-	  //FIXME This object doesn't need the col id, only the point: "color" structure.
-	  function createColorObject(col_row_names, colors){
-	  	var color_object = {};
-	  	for(var i=0; i < color_array.length; i++) {
-	  		color_object[col_row_names[i]] = {
-	  			col: colors[i]
-	  		}
-	  	};
-	  	return color_object;
-	  };
-	  
 	  function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
 	  function add(a,b) {return a + b;}
 	  function repeat(str, num) {return (new Array(num+1)).join(str);}
@@ -27,15 +14,14 @@ HTMLWidgets.widget({
 	  var abs = Math.abs
 	  
 	  // Find the bigger, height or width, and set to size, to maintain aspect ratio
-	  if(width > height) {
-	  	var size = height
-	  } else { var size = width}
+	  var size = width > height ? width : height
+	  
 	  //FIXME make sure you need all these
 	  // Initialize objects
 	  var old_result = {};
 	  var result = {};
-	  var x = {};
-	  var col_row_names = {};
+	  var scale = {};
+	  var element_ids = {};
 	  var focus_point = "__none__";
 	  var ellipse_coords = {};
 	  var sliderPosition = null;
@@ -46,8 +32,13 @@ HTMLWidgets.widget({
 		     focus_point = data.col_row_names[0]
 		     // FIXME pull the function here, you only use it once, also rename it to a map not an object
 		     var color_object = createColorObject(data.col_row_names, data.color_array);
+	 	  	 var color_object = {};
+	 	  	 for(var i=0; i < colors.length; i++) {
+	 	  	 	 color_object[col_row_names[i]] = colors[i]
+	 	  	 };
+			 
 			 // FIXME can rename to univ
-		     var result_univ = focused_mds(data.dis, data.col_row_names, data.col_row_names[0])
+		     var result = focused_mds(data.dis, data.col_row_names, data.col_row_names[0])
 			 
 			 
 			 //FIXME 
@@ -227,8 +218,8 @@ HTMLWidgets.widget({
 			 g.selectAll("ellipse")
 			     .data(data.col_row_names)
 			 	.enter().append("ellipse")
-			 	     .attr("cx", function(d) {return (result_univ[data.col_row_names[0]]['x'] + size/2 ); })
-			         .attr("cy", function(d) {return (result_univ[data.col_row_names[0]]['y'] + size/2 ); })
+			 	     .attr("cx", function(d) {return (result[data.col_row_names[0]]['x'] + size/2 ); })
+			         .attr("cy", function(d) {return (result[data.col_row_names[0]]['y'] + size/2 ); })
 			         .attr("rx", function(d,i) {return ( ellipse_coords['rx'][i]); })
 			         .attr("ry", function(d,i) {return ( ellipse_coords['ry'][i]); })
 			 		 .attr("fill", "none")
@@ -238,8 +229,8 @@ HTMLWidgets.widget({
 			 g.selectAll("circle")
 			     .data(data.col_row_names)
 			     .enter().append("circle")
-			 		   .attr("cx", function(d,i) { return x(result_univ[d]['x']); })
-			 		   .attr("cy", function(d,i) { return x(result_univ[d]['y']); })
+			 		   .attr("cx", function(d,i) { return x(result[d]['x']); })
+			 		   .attr("cy", function(d,i) { return x(result[d]['y']); })
 			 		   .attr("r", function() {console.log(0.2 * size/20); return 0.2 * size/20; })
 			           .attr("fill", function(d,i) { return color_object[d]['col']})
 			 		   .attr("stroke", function(d,i) { if(Object.keys(result_univ).indexOf(d) == 0) { return "red"}})  
@@ -250,15 +241,15 @@ HTMLWidgets.widget({
 	   
 			 			   // save phis from previous result for arc transition
 			 			   old_result = {};
-			 			   for(var i=0; i< Object.keys(result_univ).length; i++){
-			 				   old_result[Object.keys(result_univ)[i]] = {
-			 					   phi: result_univ[Object.keys(result_univ)[i]].phi,
-			 					   r: result_univ[Object.keys(result_univ)[i]].r
+			 			   for(var i=0; i< Object.keys(result).length; i++){
+			 				   old_result[Object.keys(result)[i]] = {
+			 					   phi: result[Object.keys(result)[i]].phi,
+			 					   r: result[Object.keys(result)[i]].r
 			 			   }}
 	   
 			 			   // update result_univ object by rerunning focused_mds
-			 			   result_univ = focused_mds(data.dis, data.col_row_names, d)
-						   result = result_univ
+			 			   result = focused_mds(data.dis, data.col_row_names, d)
+						   result = result
 						   focus_point = d
 			 			   console.log(d, ' new result_univ:', result_univ)
 	   
