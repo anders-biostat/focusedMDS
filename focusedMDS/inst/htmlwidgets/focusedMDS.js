@@ -1,5 +1,3 @@
-Names of variables: distances, colors, ids, graph
-
 HTMLWidgets.widget({
 
   name: 'focusedMDS',
@@ -7,46 +5,41 @@ HTMLWidgets.widget({
   type: 'output',
 
   factory: function(el, width, height) {
-	  
-	  function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
-	  function add(a,b) {return a + b;}
-	  function repeat(str, num) {return (new Array(num+1)).join(str);}
 	  var cos = Math.cos
 	  var sin = Math.sin
-	  var abs = Math.abs
 	  
 	  // Find the bigger, height or width, and set to size, to maintain aspect ratio
-	  var size = width > height ? width : height
+	  var size = width < height ? width : height
 	  
-	  //FIXME make sure you need all these
 	  // Initialize objects
 	  var old_result = {};
 	  var result = {};
 	  var scale = {};
 	  var element_ids = {};
 	  var focus_point = "__none__";
-	  var ellipse_coords = {};
 	  var sliderPosition = null;
 
     return {
 
 	  renderValue: function(data) {
-		     focus_point = data.ids[0]
+		  if(data.graph == true){
+			 
+			 focus_point = data.focus_point
 		     
 	 	  	 var color_object = {};
-	 	  	 for(var i=0; i < colors.length; i++) {
-	 	  	 	 color_object[ids[i]] = colors[i]
+	 	  	 for(var i=0; i < data.colors.length; i++) {
+	 	  	 	 color_object[data.ids[i]] = data.colors[i]
 	 	  	 };
 			 
-		     var result = focused_mds(data.distances, data.ids, focus_point, data.tol)
+		     result = focused_mds(data.distances, data.ids, focus_point, data.tol)
 			 
 			 // Find max distance in dist for scaling factor functions
 			 var maxDistance = [];
 			 
 			 for(var i=0; i< data.distances.length; i++) {
 			 	 for(j=0; j< data.distances.length; j++){
-					 if( maxDistance < distances[i][j]){
-					 	maxDistance = distances[i][j]
+					 if( maxDistance < data.distances[i][j]){
+					 	maxDistance = data.distances[i][j]
 					 }
 				 }
 			 };
@@ -69,12 +62,10 @@ HTMLWidgets.widget({
 			 	 	 .attr('class', 'chart')
 			 	 	 .attr('id', 'chart_svg')
 					  
-			 var main = chart.append('g')
+			 var g = chart.append('g')
 			 	     .attr('width', size)
 			 	     .attr('height', size)
 			 	     .attr('class', 'main');
-
-			 var g = main.append("svg:g");
 			 
 			 // Create div for sidebar stuff and append to el
 			 
@@ -201,14 +192,16 @@ HTMLWidgets.widget({
 
 			 // Create polar coordinate gridline radii
 			 gridlines_rs = [];
-			 for(var i=1; i != 9; ++i) { gridlines_rs.push(i/8 *size) }
-			 
+			 for(var i=1; i != 15; ++i) { gridlines_rs.push(i/6 * size / 2) }
+
 			 g.selectAll("ellipse")
-			 	.enter().append("circle")
-					 .attr("id", "polar_gridlines")
+			     .data(gridlines_rs)
+			     .enter().append("ellipse")
+					 .attr("class", "polar_gridlines")
 			 	     .attr("cx", function() {return (result[data.ids[0]]['x'] + size/2 ); })
 			         .attr("cy", function() {return (result[data.ids[0]]['y'] + size/2 ); })
-			         .attr("r", function(i) {return ( gridlines_rs[i]); })
+			 		 .attr("rx", function(d) { return d; })
+				 	 .attr("ry", function(d) { return d; })
 			 		 .attr("fill", "none")
 			 		 .attr("stroke","gray")
 			 
@@ -216,11 +209,11 @@ HTMLWidgets.widget({
 			 g.selectAll("circle")
 			     .data(data.ids)
 			     .enter().append("circle")
-					   .attr("id", "data_points")
+					   .attr("class", "data_points")
 			 		   .attr("cx", function(d,i) { return scale(result[d]['x']); })
 			 		   .attr("cy", function(d,i) { return scale(result[d]['y']); })
-			 		   .attr("r", function() {console.log(0.2 * size/20); return 0.2 * size/20; })
-			           .attr("fill", function(d,i) { return color_object[d]['col']})
+			 		   .attr("r", 0.2 * size/20)
+			           .attr("fill", function(d,i) { return color_object[d]})
 			 		   .attr("stroke", function(d,i) { if(Object.keys(result).indexOf(d) == 0) { return "red"}})  
 			 		   .on( "dblclick", function(d,i) {
 			 			   // save phis from previous result for arc transition
@@ -229,14 +222,15 @@ HTMLWidgets.widget({
 			 				   old_result[Object.keys(result)[i]] = {
 			 					   phi: result[Object.keys(result)[i]].phi,
 			 					   r: result[Object.keys(result)[i]].r
-			 			   }}
-	   
-			 			   // update result_univ object by rerunning focused_mds
-			 			   result = focused_mds(data.distances, data.ids, d)
+			 				   }
+						   }
+	   					
+			 			   // update result object by rerunning focused_mds
+			 			   result = focused_mds(data.distances, data.ids, d, data.tol)
 						   focus_point = d
-	   
+	    				   console.log("old_result, result, focus_point:", old_result, result, focus_point)
 			 			   // update all circles
-			 			   g.selectAll("#data_points")
+			 			   g.selectAll("circle")
 			 			       .data(data.ids)
 			 			       .transition()
 			 			       .duration(3000)
@@ -250,11 +244,11 @@ HTMLWidgets.widget({
 			 					   var rTween = d3.scaleLinear().range( [old_result[d].r, result[d].r] )
 			 					   return function(t) { return scale( rTween(t) * sin( phiTween(t) ) )}
 			 				   })
-			 				   .attr("fill", function(d,i) { return color_object[d]['col']})
+			 				   .attr("fill", function(d,i) { return color_object[d]})
 			 			   	   .attr("stroke", function(d,i) { if(Object.keys(result).indexOf(d) == 0) { return "red"}})
 	   
 			 			   // update text locations
-			 			   g.selectAll("#textLabels")
+			 			   g.selectAll("text")
 			 			   	   .data(data.ids)
 			 			       .transition()
 			 				   .duration(3000)
@@ -290,8 +284,7 @@ HTMLWidgets.widget({
 			 	            .enter()
 			 	            .append("text")
 			 			    .attr("id",function(d){return "X"+d;})
-			 			    .attr("class", "pointlabel")
-						    .attr("id","textLabels")
+						    .attr("class","textLabels")
 		
 			 // Create text labels	
 			 var textLabels = text
@@ -302,18 +295,22 @@ HTMLWidgets.widget({
 			 					 .attr("font-size", "12px")
 			 					 .attr("fill", "black")
 			 					 .style("visibility","hidden") 
+		} else {
+			result = focused_mds(data.distances, data.ids, focus_point, data.tol)
+			return result
+		}
       },
 
       resize: function(width, height) {
 		  
-		  var size = width > height ? width : height;
+		  size = width < height ? width : height;
 		  
-		  gridlines_rs = [];
-		  for(var i=1; i != 9; ++i) { gridlines_rs.push(i/8 *size) }
+		  var gridlines_rs = [];
+		  for(var i=1; i != 15; ++i) { gridlines_rs.push(i/6 * size / 2) };
 		  
 		  d3.select(el).select("svg")
 		    .attr("width", size)
-		    .attr("height", size)
+		    .attr("height", size);
 		  
 		  d3.select(el).select("g")
 		    .attr("width", size)
@@ -323,20 +320,20 @@ HTMLWidgets.widget({
 		  scale.range([0, size]);
 		  
 		  d3.select('g').selectAll("text")
-		  	.attr('x', function(d,i) {return scale(result[d]['x'] + 5) ; })
+		  	.attr('x', function(d,i) {return scale(result[d]['x'] + 5); })
 		    .attr('y', function(d,i) {return scale(result[d]['y']); })
-		  console.log(sliderPosition)
-		  d3.select('g').selectAll("#data_points")
-		    .attr("cx", function(d,i) { return scale(result[d]['x']); })
+		  
+		  d3.select('g').selectAll("circle")
+		    .attr("cx", function(d,i) { console.log("hello"); return scale(result[d]['x']); })
 		    .attr("cy", function(d,i) { return scale(result[d]['y']); })
-		    .attr("r", function() { if(sliderPosition == null) { console.log(0.2 * size/20); return 0.2 * size/20 } 
-		    else { console.log(0.2 * size/20 * sliderPosition/65 ); return 0.2 * size/20 * sliderPosition/65 } })
+		    .attr("r", function() { if(sliderPosition == null) { return 0.2 * size/20 } 
+		    else { return 0.2 * size/20 * sliderPosition/65 } })
 		  
-		  d3.select('g').selectAll("#polar_gridlines")
-		    .attr("cx", function(d) {return (result[focus_point]['x'] + size/2 ); })
+		  d3.select('g').selectAll("ellipse")
+		    .attr("cx", function(d) {console.log("hello"); return (result[focus_point]['x'] + size/2 ); })
 			.attr("cy", function(d) {return (result[focus_point]['y'] + size/2 ); })
-	        .attr("r", function(d,i) {return ( gridlines_rs[i]); })
-		  
+			.attr("rx", function(d) { return d; })
+			.attr("ry", function(d) { return d; })
       }
 
     };

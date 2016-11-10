@@ -2,12 +2,13 @@
 
 function focused_mds(distances, ids, focus_point, tol) {
     // Initializing variables and defining functions
-    function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
-	var cos = Math.cos
-	var sin = Math.sin
-	var abs = Math.abs
+    function sqr(x) { return x*x};  // Saves a lot of runtime vs Math.pow
+	var cos = Math.cos;
+	var sin = Math.sin;
+	var abs = Math.abs;
 	
 	// call distances for focus_point
+	
 	var focus_dists = distances[ids.indexOf(focus_point)];
 	
 	// zip together in an array of arrays the names and distances
