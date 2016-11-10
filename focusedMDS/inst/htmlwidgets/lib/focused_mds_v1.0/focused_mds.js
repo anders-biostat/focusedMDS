@@ -1,6 +1,6 @@
 // This function is written to be used with the focused_mds R htmlWidget
 
-function focused_mds(distances, ids, focus_point) {
+function focused_mds(distances, ids, focus_point, tol) {
     // Initializing variables and defining functions
     function sqr(x) { return x*x}  // Saves a lot of runtime vs Math.pow
 	var cos = Math.cos
@@ -11,24 +11,24 @@ function focused_mds(distances, ids, focus_point) {
 	var focus_dists = distances[ids.indexOf(focus_point)];
 	
 	// zip together in an array of arrays the names and distances
-	var names_dists = ids.map(function(e,i){
+	var ids_dists = ids.map(function(e,i){
 		return [e, focus_dists[i]];
 	});
 	
 	// sort the array by the distances
-	names_dists.sort(function(a,b){
+	ids_dists.sort(function(a,b){
 		return a[1] - b[1];
 	});
 
 	// return index of names in order of distance from focus point 
 	var ids_ordered = [];
-	for (i in names_dists){ names.push(names_dists[i][0]); };
+	for (i in ids_dists){ ids_ordered.push(ids_dists[i][0]); };
 	
 	// create an indexable object from these sorted ids and distances
 	var result = {};
 	for(var i=0; i< ids.length; i++) {
-		result[names_dists[i][0]] = {
-			r: names_dists[i][1],
+		result[ids_dists[i][0]] = {
+			r: ids_dists[i][1],
 			phi: [],
 			x: [],
 			y: []
@@ -76,7 +76,7 @@ function focused_mds(distances, ids, focus_point) {
 	
 	// use univariate optimization to calculate the rest
 	for(var new_point = 2; new_point < ids_ordered.length; new_point++) {
-		result[ids_ordered[new_point]].phi = optimize_js(0, Math.PI*2, stress, 0.001);
+		result[ids_ordered[new_point]].phi = optimize_js(0, Math.PI*2, stress, tol);
 	
 		result[ids_ordered[new_point]].x = result[ids_ordered[new_point]].r * cos(result[ids_ordered[new_point]].phi);
 		result[ids_ordered[new_point]].y = result[ids_ordered[new_point]].r * sin(result[ids_ordered[new_point]].phi);

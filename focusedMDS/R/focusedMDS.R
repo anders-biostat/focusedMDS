@@ -7,7 +7,7 @@
 #' @export
 
 # FIXME add input for user to generate xy coords to R instead of graph
-focusedMDS <- function(distances, ids = NULL, colors = NULL, graph = YES )  {
+focusedMDS <- function(distances, ids = NULL, colors = NULL, graph = YES, tol = 0.001 )  {
   
   # Run through some if statements to check the input data
   

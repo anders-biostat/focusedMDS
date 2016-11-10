@@ -38,7 +38,7 @@ HTMLWidgets.widget({
 	 	  	 	 color_object[ids[i]] = colors[i]
 	 	  	 };
 			 
-		     var result = focused_mds(data.distances, data.ids, focus_point)
+		     var result = focused_mds(data.distances, data.ids, focus_point, data.tol)
 			 
 			 // Find max distance in dist for scaling factor functions
 			 var maxDistance = [];
