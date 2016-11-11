@@ -102,7 +102,6 @@ HTMLWidgets.widget({
 			      .style('left', 0)
 			 
 			 var button = button_div.append('input')
-			     //.style('vertical-align', 'top')
 				     .attr('type', 'checkbox')
 			         .property('checked', false)
 			 
@@ -119,7 +118,7 @@ HTMLWidgets.widget({
 			 var text = button_div.append('text')
 			     .text(' Show all labels')
 			     .style('font-family', 'Georgia, serif')
-			     .style('font-size', '14px')
+			     .style('font-size', '12px')
 			 
 			 
 			 var slider_div = chart_inset.append('div')
@@ -132,7 +131,7 @@ HTMLWidgets.widget({
 			 slider_div.append('text')
 			     .text('Circle size:')
 			     .style('font-family', 'Georgia, serif')
-			     .style('font-size', '14px')
+			     .style('font-size', '12px')
 			 
 			 
 			 var sliderContainer = slider_div.append('svg')
@@ -157,12 +156,12 @@ HTMLWidgets.widget({
 			           .attr('class', 'track-inset')
 			           .style('stroke-linecap', 'round')
 			           .style('stroke', '#ddd')
-			           .style('stroke-width', '6px')
+			           .style('stroke-width', '3px')
 			     .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
 			           .attr('class', 'track-overlay')
 			           .style('stroke-linecap','round')
 			           .style('pointer-events', 'stroke')
-			           .style('stroke-width', '20px')
+			           .style('stroke-width', '15px')
 			           .style('cursor', 'crosshair')
 			           .call(d3.drag()
 		                       .on('start.interrupt', function() { slider.interrupt(); })
@@ -170,7 +169,7 @@ HTMLWidgets.widget({
 			 
 			 var handle = slider.insert('circle', '.track-overlay')
 			           .attr('class','handle')
-			           .attr('r', 5)
+			           .attr('r', 4)
 			           .attr('cx', 65)
 			           .attr('cy', 10)
 			           .style('fill', '#fff')
