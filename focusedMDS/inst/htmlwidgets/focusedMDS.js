@@ -48,13 +48,16 @@ HTMLWidgets.widget({
 			 scale = d3.scaleLinear()
 			          .domain([-1*maxDistance, maxDistance])
 			          .range([0, size]);
-				  
+		 	 
+			 // Create polar coordinate gridline radii
+		 	 var gridlines_rs = [];
+		 	 for(var i=1; i != 15; i++) { gridlines_rs.push(i/6 * size / 2) }	  
+			 
 			 // Create svg and append to a div
 					  
 			 var chart_container = d3.select(el)
 				 .append('div')
 			     .attr('id', 'chart_container')
-				 //.style('position')
 		  
 			 var chart = chart_container.append('svg:svg')
   			 	 	 .attr('width', size )
@@ -190,16 +193,12 @@ HTMLWidgets.widget({
 				 sliderPosition = input;
 			 }	 
 
-			 // Create polar coordinate gridline radii
-			 gridlines_rs = [];
-			 for(var i=1; i != 15; ++i) { gridlines_rs.push(i/6 * size / 2) }
-
 			 g.selectAll("ellipse")
 			     .data(gridlines_rs)
 			     .enter().append("ellipse")
 					 .attr("class", "polar_gridlines")
-			 	     .attr("cx", function() {return (result[data.ids[0]]['x'] + size/2 ); })
-			         .attr("cy", function() {return (result[data.ids[0]]['y'] + size/2 ); })
+			 	     .attr("cx", function() {return (result[focus_point]['x'] + size/2 ); })
+			         .attr("cy", function() {return (result[focus_point]['y'] + size/2 ); })
 			 		 .attr("rx", function(d) { return d; })
 				 	 .attr("ry", function(d) { return d; })
 			 		 .attr("fill", "none")
@@ -295,9 +294,10 @@ HTMLWidgets.widget({
 			 					 .attr("font-size", "12px")
 			 					 .attr("fill", "black")
 			 					 .style("visibility","hidden") 
-		} else {
+		} else if (data.graph == false){
+			focus_point = data.focus_point
 			result = focused_mds(data.distances, data.ids, focus_point, data.tol)
-			return result
+			console.log(result)
 		}
       },
 
@@ -306,7 +306,7 @@ HTMLWidgets.widget({
 		  size = width < height ? width : height;
 		  
 		  var gridlines_rs = [];
-		  for(var i=1; i != 15; ++i) { gridlines_rs.push(i/6 * size / 2) };
+		  for(var i=1; i != 15; i++) { gridlines_rs.push(i/6 * size /2 ) };
 		  
 		  d3.select(el).select("svg")
 		    .attr("width", size)
@@ -324,14 +324,15 @@ HTMLWidgets.widget({
 		    .attr('y', function(d,i) {return scale(result[d]['y']); })
 		  
 		  d3.select('g').selectAll("circle")
-		    .attr("cx", function(d,i) { console.log("hello"); return scale(result[d]['x']); })
+		    .attr("cx", function(d,i) { return scale(result[d]['x']); })
 		    .attr("cy", function(d,i) { return scale(result[d]['y']); })
 		    .attr("r", function() { if(sliderPosition == null) { return 0.2 * size/20 } 
 		    else { return 0.2 * size/20 * sliderPosition/65 } })
 		  
 		  d3.select('g').selectAll("ellipse")
-		    .attr("cx", function(d) {console.log("hello"); return (result[focus_point]['x'] + size/2 ); })
-			.attr("cy", function(d) {return (result[focus_point]['y'] + size/2 ); })
+		    .data(gridlines_rs)
+		    .attr("cx", function(d) { return (result[focus_point]['x'] + size/2 ); })
+			.attr("cy", function(d) { return (result[focus_point]['y'] + size/2 ); })
 			.attr("rx", function(d) { return d; })
 			.attr("ry", function(d) { return d; })
       }

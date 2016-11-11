@@ -8,7 +8,6 @@ function focused_mds(distances, ids, focus_point, tol) {
 	var abs = Math.abs;
 	
 	// call distances for focus_point
-	
 	var focus_dists = distances[ids.indexOf(focus_point)];
 	
 	// zip together in an array of arrays the names and distances
