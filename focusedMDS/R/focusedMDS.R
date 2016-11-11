@@ -32,7 +32,7 @@ focusedMDS <- function(distances, ids = NULL, colors = NULL, tol = 0.001,
   }
 
   if( is.null(colors) ) {
-	  colors <- rainbow(nrow(distances))
+	  colors <- rainbow(nrow(distances), v = .85)
 	  } else {
 		  if(nrow(distances) != length(colors) ) {
 		  	stop( "Number of rows/columns in 'distances' does not match length of 'colors' vector.")
