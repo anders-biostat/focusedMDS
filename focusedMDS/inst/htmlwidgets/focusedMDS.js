@@ -18,6 +18,7 @@ HTMLWidgets.widget({
 	  var element_ids = {};
 	  var focus_point = "__none__";
 	  var sliderPosition = null;
+	  var lines = [];
 
     return {
 
@@ -25,7 +26,8 @@ HTMLWidgets.widget({
 		  if(data.graph == true){
 			 
 			 focus_point = data.focus_point
-		     
+		     lines = data.lines
+			  
 	 	  	 var color_object = {};
 	 	  	 for(var i=0; i < data.colors.length; i++) {
 	 	  	 	 color_object[data.ids[i]] = data.colors[i]
@@ -51,7 +53,7 @@ HTMLWidgets.widget({
 		 	 
 			 // Create polar coordinate gridline radii
 		 	 var gridlines_rs = [];
-		 	 for(var i=1; i != 15; i++) { gridlines_rs.push(i/6 * size / 2) }	  
+		 	 for(var i=1; i != lines; i++) { gridlines_rs.push((i/Math.round((lines - 2) / 2 )) * size / 2) }	  
 			 
 			 // Create svg and append to a div
 					  
@@ -305,7 +307,7 @@ HTMLWidgets.widget({
 		  size = width < height ? width : height;
 		  
 		  var gridlines_rs = [];
-		  for(var i=1; i != 15; i++) { gridlines_rs.push(i/6 * size /2 ) };
+		  for(var i=1; i != lines; i++) { gridlines_rs.push((i/Math.round((lines - 2) / 2 )) * size / 2) };
 		  
 		  d3.select(el).select("svg")
 		    .attr("width", size)

@@ -7,9 +7,10 @@
 #' @export
 
 focusedMDS <- function(distances, ids = NULL, colors = NULL, tol = 0.001, 
-	                   focus_point = ids[1], graph = TRUE, size = NULL )  {
+	                   focus_point = ids[1], size = NULL, lines = 7 )  {
   
   # Run through some if statements to check the input data
+  graph <- TRUE
   
   if( class(distances) == "dist") {
 	  distances <- as.matrix(distances)
@@ -48,10 +49,13 @@ focusedMDS <- function(distances, ids = NULL, colors = NULL, tol = 0.001,
 		  stop("'size' must be numeric (px).")
 	  }
   }
-
+  
+  lines <- lines * 2 
+  
   # create a list that contains the data to feed to JSON
   data = list(
-    distances = distances, ids = ids, colors = colors, tol = tol, focus_point = focus_point, graph = graph
+    distances = distances, ids = ids, colors = colors, tol = tol, 
+	focus_point = focus_point, graph = graph, lines = lines
   )
   
   # create widget
