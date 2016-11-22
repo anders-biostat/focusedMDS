@@ -23,8 +23,7 @@ HTMLWidgets.widget({
     return {
 
 	  renderValue: function(data) {
-		  if(data.graph == true){
-			 
+		  
 			 focus_point = data.focus_point
 		     circles = data.circles
 			  
@@ -295,11 +294,6 @@ HTMLWidgets.widget({
 			 					 .attr("font-size", "12px")
 			 					 .attr("fill", "black")
 			 					 .style("visibility","hidden") 
-		} else if (data.graph == false){
-			focus_point = data.focus_point
-			result = focused_mds(data.distances, data.ids, focus_point, data.tol)
-			console.log(result)
-		}
       },
 
       resize: function(width, height) {
