@@ -192,7 +192,8 @@ HTMLWidgets.widget({
 				 
 				 sliderPosition = input;
 			 }	 
-
+			 
+			 // Create background bars
 			 g.selectAll("ellipse")
 			     .data(gridlines_rs)
 			     .enter().append("ellipse")
