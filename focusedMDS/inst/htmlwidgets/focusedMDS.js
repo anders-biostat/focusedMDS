@@ -255,7 +255,7 @@ HTMLWidgets.widget({
 			 			       .attrTween("x", function(d,i) {
 			 					   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result[d].phi] )
 			 					   var rTween = d3.scaleLinear().range( [old_result[d].r, result[d].r] )
-			 					   return function(t) { return scale( rTween(t) * cos( phiTween(t) ) + 5)}
+			 					   return function(t) { return scale( rTween(t) * cos( phiTween(t) ) ) + size/100}
 			 				   })
 			 				   .attrTween("y", function(d,i) {
 			 					   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result[d].phi] )
@@ -288,7 +288,7 @@ HTMLWidgets.widget({
 		
 			 // Create text labels	
 			 var textLabels = text
-			 	  	  		     .attr('x', function(d,i) {return scale(result[d]['x'] + 5) ; })
+			 	  	  		     .attr('x', function(d,i) {return scale(result[d]['x']) + size/100; })
 			 					 .attr('y', function(d,i) {return scale(result[d]['y']); })
 			 					 .text( function (d) {return d })
 			 					 .attr("font-family", "sans-serif")
@@ -321,7 +321,7 @@ HTMLWidgets.widget({
 		  scale.range([0, size]);
 		  
 		  d3.select('g').selectAll("text")
-		  	.attr('x', function(d,i) {return scale(result[d]['x'] + 5); })
+		  	.attr('x', function(d,i) {return scale(result[d]['x']) + size/100; })
 		    .attr('y', function(d,i) {return scale(result[d]['y']); })
 		  
 		  d3.select('g').selectAll("circle")
