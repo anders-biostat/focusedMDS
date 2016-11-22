@@ -25,7 +25,7 @@ focusedMDS <- function(distances, ids = NULL, colors = NULL, focus_point = ids[1
  
   
   if( is.null(ids))  {
-	  ids <- c(1:nrow(distances))
+	  ids <- paste( rep("N", nrow(distances)), c(1:nrow(distances)), sep = "")
   } else {
 	  if( nrow(distances) != length(ids)) {
 	  	stop( "Number of rows/columns in 'distances' does not match length of 'ids' vector.")
