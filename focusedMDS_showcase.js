@@ -13,15 +13,14 @@ var colors = ["firebrick","firebrick","firebrick","firebrick","firebrick","fireb
 
 var colorsNULL = ["#D90000FF","#D90900FF","#D91100FF","#D91A00FF","#D92300FF","#D92B00FF","#D93400FF","#D93D00FF","#D94500FF","#D94E00FF","#D95700FF","#D95F00FF","#D96800FF","#D97100FF","#D97900FF","#D98200FF","#D98B00FF","#D99300FF","#D99C00FF","#D9A500FF","#D9AD00FF","#D9B600FF","#D9BF00FF","#D9C700FF","#D9D000FF","#D9D900FF","#D0D900FF","#C7D900FF","#BFD900FF","#B6D900FF","#ADD900FF","#A5D900FF","#9CD900FF","#93D900FF","#8BD900FF","#82D900FF","#79D900FF","#71D900FF","#68D900FF","#5FD900FF","#57D900FF","#4ED900FF","#45D900FF","#3DD900FF","#34D900FF","#2BD900FF","#23D900FF","#1AD900FF","#11D900FF","#09D900FF","#00D900FF","#00D909FF","#00D911FF","#00D91AFF","#00D923FF","#00D92BFF","#00D934FF","#00D93DFF","#00D945FF","#00D94EFF","#00D957FF","#00D95FFF","#00D968FF","#00D971FF","#00D979FF","#00D982FF","#00D98BFF","#00D993FF","#00D99CFF","#00D9A5FF","#00D9ADFF","#00D9B6FF","#00D9BFFF","#00D9C7FF","#00D9D0FF","#00D9D9FF","#00D0D9FF","#00C7D9FF","#00BFD9FF","#00B6D9FF","#00ADD9FF","#00A5D9FF","#009CD9FF","#0093D9FF","#008BD9FF","#0082D9FF","#0079D9FF","#0071D9FF","#0068D9FF","#005FD9FF","#0057D9FF","#004ED9FF","#0045D9FF","#003DD9FF","#0034D9FF","#002BD9FF","#0023D9FF","#001AD9FF","#0011D9FF","#0009D9FF","#0000D9FF","#0900D9FF","#1100D9FF","#1A00D9FF","#2300D9FF","#2B00D9FF","#3400D9FF","#3D00D9FF","#4500D9FF","#4E00D9FF","#5700D9FF","#5F00D9FF","#6800D9FF","#7100D9FF","#7900D9FF","#8200D9FF","#8B00D9FF","#9300D9FF","#9C00D9FF","#A500D9FF","#AD00D9FF","#B600D9FF","#BF00D9FF","#C700D9FF","#D000D9FF","#D900D9FF","#D900D0FF","#D900C7FF","#D900BFFF","#D900B6FF","#D900ADFF","#D900A5FF","#D9009CFF","#D90093FF","#D9008BFF","#D90082FF","#D90079FF","#D90071FF","#D90068FF","#D9005FFF","#D90057FF","#D9004EFF","#D90045FF","#D9003DFF","#D90034FF","#D9002BFF","#D90023FF","#D9001AFF","#D90011FF","#D90009FF"] 
 
-// Define Focused MDS function
+// Define Focused MDS function, which returns the object you want
 function focused_mds(distances, ids, focus_point, tol) {
-    // Initializing variables and defining functions
-    function sqr(x) { return x*x};  // Saves a lot of runtime vs Math.pow
+	function sqr(x) { return x*x};  // Saves a lot of runtime vs Math.pow
 	var abs = Math.abs;
-
+	
 	// call distances for focus_point
 	var focus_dists = distances[ids.indexOf(focus_point)];
-
+	
 	// zip together in an array of arrays the names and distances
 	var ids_dists = ids.map(function(e,i){
 		return [e, focus_dists[i]];
@@ -46,7 +45,7 @@ function focused_mds(distances, ids, focus_point, tol) {
 			y: []
 		}
 	};
-
+   
 	// Define the stress function
 	// This function, to be optimized on, needs only one input (phi)
 	// It finds new_point from the for loop environment defined below
@@ -95,3 +94,286 @@ function focused_mds(distances, ids, focus_point, tol) {
 	};
 	return result;
 };
+
+function create_focusedMDS_plot(distances, ids, focus_point, colors, tol, dom_location_id, result){
+    // Initializing variables and defining functions
+	var old_result = {};
+	var scale = {};
+	var element_ids = {};
+	var sliderPosition = null;
+	
+	// Make initial graph with all labels and colors
+
+	var color_object = {};
+	for(var i=0; i < colors.length; i++) {
+		 color_object[ids[i]] = colors[i]
+	};
+	
+	// Find max distance in dist for scaling factor functions
+	var maxDistance = [];
+
+	for(var i=0; i< distances.length; i++) {
+		 for(j=0; j< distances.length; j++){
+		 if( maxDistance < distances[i][j]){
+		 	maxDistance = distances[i][j]
+		 }
+	 }
+	}; 
+	
+	// Create scaling factors
+	scale = d3.scaleLinear()
+	         .domain([-1*maxDistance, maxDistance])
+	         .range([0, size]);
+
+	// Create polar coordinate gridline radii
+	var gridlines_rs = [];
+	for(var i=1; i != circles; i++) { gridlines_rs.push((i/Math.round((circles - 2) / 2 )) * size / 2) }	
+
+	// Create svg and append to a div
+	
+	var main = d3.select(dom_location_id)
+	     .append('div')
+	         .attr('id','main')  
+	
+	var chart_container = main.append('div')
+	         .attr('id', 'chart_container')
+
+	var chart = chart_container.append('svg:svg')
+		 	 .attr('width', size )
+		 	 .attr('height', size )
+		 	 .attr('class', 'chart')
+		 	 .attr('id', 'chart_svg')
+	  
+	var g = chart.append('g')
+		     .attr('width', size)
+		     .attr('height', size)
+		     .attr('class', 'main');
+
+	// Create div for sidebar stuff and append to chart_container
+
+	var chart_inset = main.append('div')
+	  .style('position', 'absolute')
+	  .style('top', '0')
+	  .style('left', '0')
+	     .attr('id', 'chart_inset')
+	     .attr('height', 61)
+	     .attr('width', 140)
+
+	var chart_background = chart_inset.append('svg')
+	  .style('position', 'relative')
+	  .style('z-index', 1)
+	  .style('top', '0')
+	  .style('left', '0')
+	     .attr('height', 61)
+	     .attr('width', 140)
+
+	chart_background.append('rect')
+	  .attr('fill', 'white')
+	  .attr('height', 61)
+	  .attr('width', 140)
+
+	var button_div = chart_inset.append('div')
+	  .style('text-align', 'left')
+	  .style('position', 'absolute')
+	  .style('z-index', 2)
+	  .style('top', 0)
+	  .style('left', 0)
+
+	var button = button_div.append('input')
+	     .attr('type', 'checkbox')
+	     .property('checked', false)
+
+	chart_inset.select('input').on('change', function(d){ 
+	 if (button.property('checked') == true) { 
+		 g.selectAll('text')
+		     .style('visibility', 'visible')
+	 } else { 
+		 g.selectAll('text')
+			 .style('visibility', 'hidden')
+	 }
+	})
+
+	var text = button_div.append('text')
+	 .text(' Show all labels')
+	 .style('font-family', 'Georgia, serif')
+	 .style('font-size', '12px')
+
+
+	var slider_div = chart_inset.append('div')
+	 .style('text-align', 'center')
+	  .style('position', 'absolute')
+	  .style('z-index', 2)
+	  .style('top', '20px')
+	  .style('left', 0)
+
+	slider_div.append('text')
+	 .text('Circle size:')
+	 .style('font-family', 'Georgia, serif')
+	 .style('font-size', '12px')
+
+
+	var sliderContainer = slider_div.append('svg')
+	 .attr('height',20)
+	 .attr('width', 140)
+
+	var slider = sliderContainer.append('g')
+	 .attr('class', 'slider')
+	 .attr('width', 150)
+
+	slider.append('line')
+	       .attr('class', 'track')
+	       .attr('y1', 10)
+	       .attr('y2', 10)
+	       .attr('x1', 10)
+	       .attr('x2', 130)
+	       .style('stroke-linecap', 'round')
+	       .style('stroke-opacity', 0.3)
+	       .style('stroke-width', '8px')
+	       .style('stroke', '#000')
+	 .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+	       .attr('class', 'track-inset')
+	       .style('stroke-linecap', 'round')
+	       .style('stroke', '#ddd')
+	       .style('stroke-width', '3px')
+	 .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+	       .attr('class', 'track-overlay')
+	       .style('stroke-linecap','round')
+	       .style('pointer-events', 'stroke')
+	       .style('stroke-width', '15px')
+	       .style('cursor', 'crosshair')
+	       .call(d3.drag()
+	               .on('start.interrupt', function() { slider.interrupt(); })
+			       .on('start.drag', function() { sizeAdjust(d3.event.x); }))
+
+	var handle = slider.insert('circle', '.track-overlay')
+	       .attr('class','handle')
+	       .attr('r', 4)
+	       .attr('cx', 65)
+	       .attr('cy', 10)
+	       .style('fill', '#fff')
+	       .style('stroke', '#000')
+	       .style('stroke-opacity', '0.5')
+	       .style('stroke-width', '1.25px')	
+
+	function sizeAdjust(input) {
+	 if(input < 10){
+	 	handle.attr('cx', 10)
+	 } else if(input > 130){
+	 	handle.attr('cx', 130)
+	 } else {
+	 	handle.attr('cx', input)
+	 };
+ 
+	 g.selectAll('circle')
+	     .attr('r', 0.2 * size/20 * input/65 );
+ 
+	 sliderPosition = input;
+	}	 
+			 
+	// Create background bars
+	g.selectAll("ellipse")
+	 .data(gridlines_rs)
+	 .enter().append("ellipse")
+		 .attr("class", "polar_gridlines")
+	     .attr("cx", function() {return (result[focus_point]['x'] + size/2 ); })
+	     .attr("cy", function() {return (result[focus_point]['y'] + size/2 ); })
+		 .attr("rx", function(d) { return d; })
+	 	 .attr("ry", function(d) { return d; })
+		 .attr("fill", "none")
+		 .attr("stroke","gray")
+
+	// Create scatterplot circles with clickable reordering
+	g.selectAll("circle")
+	    .data(ids)
+	    .enter().append("circle")
+		       .attr("class", "data_points")
+			   .attr("cx", function(d,i) { return scale(result[d]['x']); })
+			   .attr("cy", function(d,i) { return scale(result[d]['y']); })
+			   .attr("r", 0.2 * size/20)
+	           .attr("fill", function(d,i) { return color_object[d]})
+			   .attr("stroke", function(d,i) { if(Object.keys(result).indexOf(d) == 0) { return "red"}})  
+			   .on( "dblclick", function(d,i) {
+				   // save phis from previous result for arc transition
+				   old_result = {};
+				   for(var i=0; i< Object.keys(result).length; i++){
+					   old_result[Object.keys(result)[i]] = {
+						   phi: result[Object.keys(result)[i]].phi,
+						   r: result[Object.keys(result)[i]].r
+					   }
+			       }
+		
+				   // update result object by rerunning focused_mds
+				   result = focused_mds(distances, ids, d, tol)
+			       focus_point = d
+		       
+				   // update all circles
+				   g.selectAll("circle")
+				       .data(ids)
+				       .transition()
+				       .duration(3000)
+				       .attrTween("cx", function(d,i) {
+						   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result[d].phi] )
+						   var rTween = d3.scaleLinear().range( [old_result[d].r, result[d].r] )
+						   return function(t) { return scale( rTween(t) * cos( phiTween(t) ) )}
+					   })
+					   .attrTween("cy", function(d,i) {
+						   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result[d].phi] )
+						   var rTween = d3.scaleLinear().range( [old_result[d].r, result[d].r] )
+						   return function(t) { return scale( rTween(t) * sin( phiTween(t) ) )}
+					   })
+					   .attr("fill", function(d,i) { return color_object[d]})
+				   	   .attr("stroke", function(d,i) { if(Object.keys(result).indexOf(d) == 0) { return "red"}})
+
+				   // update text locations
+				   g.selectAll("text")
+				   	   .data(ids)
+				       .transition()
+					   .duration(3000)
+				       .attrTween("x", function(d,i) {
+						   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result[d].phi] )
+						   var rTween = d3.scaleLinear().range( [old_result[d].r, result[d].r] )
+						   return function(t) { return scale( rTween(t) * cos( phiTween(t) ) ) + size/100}
+					   })
+					   .attrTween("y", function(d,i) {
+						   var phiTween = d3.scaleLinear().range( [old_result[d].phi, result[d].phi] )
+						   var rTween = d3.scaleLinear().range( [old_result[d].r, result[d].r] )
+						   return function(t) { return scale( rTween(t) * sin( phiTween(t) ) )}
+					   })
+					   .text( function (d) {return d })
+
+			 	 })
+
+				 .on("mouseover", function(d){
+	  			     d3.select(dom_location_id).select("text#X"+d)	 	 
+					     .style("visibility","visible")
+			     })
+		         .on("mouseout", function(d){
+				 if( button.property('checked') == false ){
+	 			         d3.select(dom_location_id).select("text#X"+d)
+				  	         .style("visibility","hidden")
+				 } 
+			     })
+			     ;
+	// Add svg text element to g
+	var text = g.selectAll("text")
+	            .data(ids)
+	            .enter()
+	            .append("text")
+			    .attr("id",function(d){return "X"+d;})
+			    .attr("class","textLabels")
+
+	// Create text labels	
+	var textLabels = text
+	  	  		     .attr('x', function(d,i) {return scale(result[d]['x']) + size/100; })
+					 .attr('y', function(d,i) {return scale(result[d]['y']); })
+					 .text( function (d) {return d })
+					 .attr("font-family", "sans-serif")
+					 .attr("font-size", "12px")
+					 .attr("fill", "black")
+					 .style("visibility","hidden") 
+				 
+	return main;
+	
+}
+
+
