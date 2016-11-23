@@ -227,10 +227,10 @@ function create_focusedMDS_plot(distances, ids, focus_point, colors, tol, dom_lo
 					     .style("visibility","visible")
 			     })
 		         .on("mouseout", function(d){
-				 if( button.property('checked') == false ){
+				 //if( button.property('checked') == false ){
 	 			         d3.select(dom_location_id).select("text#X"+d)
 				  	         .style("visibility","hidden")
-				 } 
+					 //} 
 			     })
 			     ;
 	// Add svg text element to g

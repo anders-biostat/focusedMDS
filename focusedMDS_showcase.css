@@ -1,0 +1,25 @@
+body {
+	background-color: white;
+}
+
+h1 {
+    font-family: 'Nunito', sans-serif;
+}
+
+body {
+	font-family: 'Open Sans', sans-serif;
+	width: 720;
+	margin-top: 50px;
+	margin-bottom: 100px;
+	margin-right: 150px;
+	margin-left: 80px;
+}
+
+p {
+	font-size: 14px;
+}
+
+.somecode {
+	margin-left: 30px;
+	font-color: "red";
+}
