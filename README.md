@@ -4,4 +4,8 @@ Interactive multidimensional scaling. The user chooses a particular data point (
 
 # Example
 
-See website:
+See website: https://lea-urpa.github.io/focusedMDS.html
+
+# Download
+
+Code is available here. An R package and documentation are coming soon on CRAN.
