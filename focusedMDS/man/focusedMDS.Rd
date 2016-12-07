@@ -5,10 +5,10 @@
 \title{Focused, interactive multidimensional scaling}
 \usage{
 focusedMDS(distances, ids = NULL, colors = NULL, focus_point = ids[1],
-  size = NULL, circles = 7, tol = 0.001)
+  size = NULL, circles = 7, tol = 0.001, check_matrix = FALSE)
 }
 \arguments{
-\item{distances}{A square, symmetric matrix or 
+\item{distances}{A square, symmetric distance matrix or 
 \code{dist} object.}
 
 \item{ids}{A vector with length equal to the 
@@ -31,20 +31,29 @@ pixels. Disables dynamic sizing.}
 
 \item{tol}{The tolerance for the optimization method choosing
 the location of the non-focus points. Default 0.001.}
+
+\item{check_matrix}{Turns on additional checks of the matrix,
+ensuring that the given matrix is symmetric and fulfills the
+triangle inequality. Slows down the initial graph plotting, 
+but useful if you are not sure if your matrix is a distance
+matrix or has been calculated correctly.}
 }
 \description{
-\code{focusedMDS} takes a distance matrix and 
-outputs an htmlwidget interactive graph where 
-a chosen point is 'focused' at the center of 
-the graph. The points are plotted with exact
-distance to the focus point, meaning the values 
-given in the distance matrix, while the non-focus
-points are plotted as exactly as possible to one
-another. See \url{https://lea-urpa.github.io/focusedMDS.html} 
-for more details.
+\code{focusedMDS} takes a distance matrix and plots
+it as an interactive graph. Double click on
+any point to choose a new focus point, and hover over
+points to see their ID labels. In this graph, one point 
+is focused on at the center of the graph. All other points
+are plotted around this central point at their exact 
+distances to the point, as given in the distance matrix.
+In other words, the distance between each point and the
+focus point are the true distances given in the distance 
+matrix. The non focus points are plotted with respect to 
+each other as exactly as possible. For more details, see
+\url{https://lea-urpa.github.io/focusedMDS.html}.
 }
 \examples{
-See \\{https://lea-urpa.github.io/focusedMDS.html} for 
+See https://lea-urpa.github.io/focusedMDS.html for 
 an illustrated version of this example.
 
 library(datasets)
