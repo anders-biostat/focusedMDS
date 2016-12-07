@@ -1,23 +1,25 @@
 #' Focused, interactive multidimensional scaling
 #' 
-#' \code{focusedMDS} takes a distance matrix and 
-#' outputs an htmlwidget interactive graph where 
-#' a chosen point is 'focused' at the center of 
-#' the graph. The points are plotted with exact
-#' distance to the focus point, meaning the values 
-#' given in the distance matrix, while the non-focus
-#' points are plotted as exactly as possible to one
-#' another. See \url{https://lea-urpa.github.io/focusedMDS.html} 
-#' for more details.
+#' \code{focusedMDS} takes a distance matrix and plots
+#' it as an interactive graph. Double click on
+#' any point to choose a new focus point, and hover over
+#' points to see their ID labels. In this graph, one point 
+#' is focused on at the center of the graph. All other points
+#' are plotted around this central point at their exact 
+#' distances to the point, as given in the distance matrix.
+#' In other words, the distance between each point and the
+#' focus point are the true distances given in the distance 
+#' matrix. The non focus points are plotted with respect to 
+#' each other as exactly as possible. For more details, see
+#' \url{https://lea-urpa.github.io/focusedMDS.html}.
 #'
 #' @import htmlwidgets
 #'
 #' @export
 #'
-
 #' 
-#' @param distances A square, symmetric matrix or 
-#'   \code{dist} object.
+#' @param distances A square, symmetric distance matrix or 
+#'   \code{dist} object. 
 #' @param ids A vector with length equal to the 
 #'   number of rows of the matrix given in \code{distances}.
 #'   Must be a character vector.
@@ -33,9 +35,14 @@
 #' @param circles The number of background polar gridlines.
 #' @param tol The tolerance for the optimization method choosing
 #'   the location of the non-focus points. Default 0.001.
+#' @param check_matrix Turns on additional checks of the matrix,
+#'   ensuring that the given matrix is symmetric and fulfills the
+#'   triangle inequality. Slows down the initial graph plotting, 
+#'   but useful if you are not sure if your matrix is a distance
+#'   matrix or has been calculated correctly.
 #' 
 #' @examples
-#' See \{https://lea-urpa.github.io/focusedMDS.html} for 
+#' See https://lea-urpa.github.io/focusedMDS.html for 
 #' an illustrated version of this example.
 #'
 #' library(datasets)
@@ -76,23 +83,59 @@
 
 
 focusedMDS <- function(distances, ids = NULL, colors = NULL, focus_point = ids[1],
-	                   size = NULL, circles = 7, tol = 0.001 )  {
+	                   size = NULL, circles = 7, tol = 0.001, check_matrix = FALSE )  {
   
   # Run through some if statements to check the input data
   graph <- TRUE
   
+  # Convert dist object to matrix, if necessary
   if( class(distances) == "dist") {
 	  distances <- as.matrix(distances)
+	  check_matrix <- FALSE
   } 
   
+  # Check that the input is a matrix
   if( !is.matrix(distances)) {
 	 stop( "'distances' must be a matrix or 'dist' object.")
   }
   
+  # Check that the matrix is square
   if( nrow(distances) != ncol(distances))
 	stop( "'distances' must be a square matrix or 'dist' object.")
- 
   
+  # Check that the matrix is symmetric
+  if(check_matrix == TRUE){
+	  for(i in 1:nrow(distances)){
+	    for(j in 1:nrow(distances)){
+	      if(distances[i,j] != distances[j,i]){
+	        stop("Matrix does not appear to be symmetric. Are you sure it's a distance matrix? Try submitting a dist object.")
+	      }
+	    }
+	  }
+  }
+  
+  # Check that the matrix fulfills the triangle inequality.
+  if(check_matrix == TRUE){
+	  for(i in 1:nrow(distances)){
+	    for(j in 1:nrow(distances)){
+	      for(k in 1:nrow(distances)){
+	        if(i==j | i==k | j==k){
+      
+	        } else if( (round(distances[i,j], digits=2) <= 
+							round(distances[i,k] + distances[j,k], digits=2)) == FALSE |
+	                   (round(distances[i,k], digits=2) <= 
+					   	 	round(distances[i,j] + distances[j,k], digits=2)) == FALSE |
+	                   (round(distances[j,k], digits=2) <= 
+					   		round(distances[i,j] + distances[i,k], digits=2)) == FALSE ){
+	          stop("Matrix does not fulfill triangle inequality. Are you sure it's a distance matrix? Try submitting a dist object.")
+	        } 
+	      }
+	    }
+	  }
+  }
+  
+  # If no IDs specified, add ID vector. 
+  # If IDs specified, confirm the vector is of the correct length and is a character vector.
   if( is.null(ids))  {
 	  ids <- paste( rep("N", nrow(distances)), c(1:nrow(distances)), sep = "")
   } else {
@@ -104,10 +147,13 @@ focusedMDS <- function(distances, ids = NULL, colors = NULL, focus_point = ids[1
 	  }
   }
   
-  if( match(focus_point, ids) == NA) {
+  # Check that the specified focus_point is contained in the ids vector
+  if( any(ids == focus_point) == FALSE) {
 	  stop("Given focus_point is not an element in the ids vector.")
   }
   
+  # If no colors specified, give rainbow colors.
+  # If colors specified, check that the number of colors matches the number of points.
   if( is.null(colors) ) {
 	  colors <- rainbow(nrow(distances), v = .85)
 	  } else {
@@ -116,10 +162,12 @@ focusedMDS <- function(distances, ids = NULL, colors = NULL, focus_point = ids[1
 	  }
   }
   
+  # Check that that tolerance level is given as a number
   if( !is.numeric(tol)) {
 	  stop("'tol' must be numeric ")
   }
   
+  # Check that the size of the window is given as a number
   if( !is.null(size)) {
 	  if( !is.numeric(size)) {
 		  stop("'size' must be numeric (px).")
