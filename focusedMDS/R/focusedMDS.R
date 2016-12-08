@@ -104,14 +104,9 @@ focusedMDS <- function(distances, ids = NULL, colors = NULL, focus_point = ids[1
 	stop( "'distances' must be a square matrix or 'dist' object.")
   
   # Check that the matrix is symmetric
-  if(check_matrix == TRUE){
-	  for(i in 1:nrow(distances)){
-	    for(j in 1:nrow(distances)){
-	      if(distances[i,j] != distances[j,i]){
-	        stop("Matrix does not appear to be symmetric. Are you sure it's a distance matrix? Try submitting a dist object.")
-	      }
-	    }
-	  }
+  
+  if( distances != t(distances)){
+	  stop("Matrix does not appear to be symmetric. Are you sure it's a distance matrix? Try submitting a dist object.")
   }
   
   # Check that the matrix fulfills the triangle inequality.
