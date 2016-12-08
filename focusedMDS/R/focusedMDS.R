@@ -36,7 +36,7 @@
 #' @param tol The tolerance for the optimization method choosing
 #'   the location of the non-focus points. Default 0.001.
 #' @param check_matrix Turns on additional checks of the matrix,
-#'   ensuring that the given matrix is symmetric and fulfills the
+#'   ensuring that the given matrix fulfills the
 #'   triangle inequality. Slows down the initial graph plotting, 
 #'   but useful if you are not sure if your matrix is a distance
 #'   matrix or has been calculated correctly.
