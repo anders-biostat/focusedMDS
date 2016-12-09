@@ -14,6 +14,7 @@
 #' \url{https://lea-urpa.github.io/focusedMDS.html}.
 #'
 #' @import htmlwidgets
+#' @importFrom "grDevices" "rainbow"
 #'
 #' @export
 #'
@@ -42,8 +43,8 @@
 #'   matrix or has been calculated correctly.
 #' 
 #' @examples
-#' See https://lea-urpa.github.io/focusedMDS.html for 
-#' an illustrated version of this example.
+#' # See http://lea-urpa.github.io/focusedMDS.html for 
+#' # an illustrated version of this example.
 #'
 #' library(datasets)
 #' library(focusedMDS)
@@ -105,7 +106,7 @@ focusedMDS <- function(distances, ids = NULL, colors = NULL, focus_point = ids[1
   
   # Check that the matrix is symmetric
   
-  if( distances != t(distances)){
+  if( is.element(FALSE, distances == t(distances)) ){
 	  stop("Matrix does not appear to be symmetric. Are you sure it's a distance matrix? Try submitting a dist object.")
   }
   
@@ -137,7 +138,7 @@ focusedMDS <- function(distances, ids = NULL, colors = NULL, focus_point = ids[1
 	  if( nrow(distances) != length(ids)) {
 	  	stop( "Number of rows/columns in 'distances' does not match length of 'ids' vector.")
 	  }
-	  if( class(ids != "character")){
+	  if( class(ids) != "character"){
 		stop( "ids vector is not a character vector.")
 	  }
   }

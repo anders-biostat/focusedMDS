@@ -33,7 +33,7 @@ pixels. Disables dynamic sizing.}
 the location of the non-focus points. Default 0.001.}
 
 \item{check_matrix}{Turns on additional checks of the matrix,
-ensuring that the given matrix is symmetric and fulfills the
+ensuring that the given matrix fulfills the
 triangle inequality. Slows down the initial graph plotting, 
 but useful if you are not sure if your matrix is a distance
 matrix or has been calculated correctly.}
@@ -53,8 +53,8 @@ each other as exactly as possible. For more details, see
 \url{https://lea-urpa.github.io/focusedMDS.html}.
 }
 \examples{
-See https://lea-urpa.github.io/focusedMDS.html for 
-an illustrated version of this example.
+# See http://lea-urpa.github.io/focusedMDS.html for 
+# an illustrated version of this example.
 
 library(datasets)
 library(focusedMDS)

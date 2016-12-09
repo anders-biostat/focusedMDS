@@ -2,3 +2,4 @@
 
 export(focusedMDS)
 import(htmlwidgets)
+importFrom("grDevices","rainbow")
