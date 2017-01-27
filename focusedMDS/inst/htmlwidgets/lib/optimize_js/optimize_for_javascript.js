@@ -39,6 +39,19 @@
 //      this function subprogram is a slightly modified  version  of  the
 //  algol  60 procedure  localmin  given in richard brent, algorithms for
 //  minimization without derivatives, prentice - hall, inc. (1973).
+
+if( Math.sign === undefined ) {
+	Math.sign = function(x) {
+		if( x > 0 ) {
+			return 1;
+		} else if ( x < 0 ) {
+			return -1;
+		} else if( x == 0 ) {
+			return 0;
+		} else
+		   throw "Error";
+	}
+}
 	
 var optimize_js = function(ax, bx, f, tol) {
 	
