@@ -8,4 +8,4 @@ See website: https://lea-urpa.github.io/focusedMDS.html
 
 # Download
 
-Code is available here. An R package and documentation are coming soon on CRAN.
+Code is available here. An R package and documentation are coming soon on CRAN. Send us an e-mail for early acces and help.
