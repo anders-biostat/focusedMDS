@@ -152,6 +152,10 @@ focusedMDS <- function(distances, ids = NULL, colors = NULL, focus_point = ids[1
   # If colors specified, check that the number of colors matches the number of points.
   if( is.null(colors) ) {
 	  colors <- rainbow(nrow(distances), v = .85)
+	  rgbcolors <- as.data.frame(t(col2rgb(colors)))
+	  rgbcolors <- paste(rgbcolors$red, rgbcolors$green, rgbcolors$blue, sep = ",")
+	  colors <- paste(rep("rgb(", length(rgbcolors)), rgbcolors, rep(")", length(rgbcolors)), sep= "")
+	  
 	  } else {
 		  if(nrow(distances) != length(colors) ) {
 		  	stop( "Number of rows/columns in 'distances' does not match length of 'colors' vector.")
