@@ -15,6 +15,7 @@
 #'
 #' @import htmlwidgets
 #' @importFrom "grDevices" "rainbow"
+#' @importFrom "grDevices" "col2rgb"
 #'
 #' @export
 #'
