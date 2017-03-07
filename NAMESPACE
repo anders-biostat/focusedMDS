@@ -3,5 +3,6 @@
 export(focusedMDS)
 import(htmltools)
 import(htmlwidgets)
+import(yaml)
 importFrom("grDevices","col2rgb")
 importFrom("grDevices","rainbow")
