@@ -26,13 +26,13 @@ HTMLWidgets.widget({
 		  
 			 focus_point = data.focus_point
 		     circles = data.circles
-			  
+			 
 	 	  	 var color_object = {};
 	 	  	 for(var i=0; i < data.colors.length; i++) {
 	 	  	 	 color_object[data.ids[i]] = data.colors[i]
 	 	  	 };
 			 
-		     result = focused_mds(data.distances, data.ids, focus_point, data.tol)
+		     result = focused_mds(data.distances, data.ids, focus_point, data.tol, data.subsampling)
 			 
 			 // Find max distance in dist for scaling factor functions
 			 var maxDistance = [];

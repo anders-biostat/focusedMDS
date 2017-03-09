@@ -39,11 +39,15 @@
 #' @param circles The number of background polar gridlines.
 #' @param tol The tolerance for the optimization method choosing
 #'   the location of the non-focus points. Default 0.001.
-#' @param check_matrix Turns on additional checks of the matrix,
+#' @param check_matrix Logical value permitting additional checks of the matrix,
 #'   ensuring that the given matrix fulfills the
 #'   triangle inequality. Slows down the initial graph plotting, 
 #'   but useful if you are not sure if your matrix is a distance
 #'   matrix or has been calculated correctly.
+#' @param subsampling Logical value stating that for samples of over
+#'   100 points, each point iteratively plotted after the 100th point will 
+#'   be optimized to a subsample of the previously plotted data points.
+#'   Recommended for plotting data sets with more than 300 points.
 #' 
 #' @examples
 #' # See http://lea-urpa.github.io/focusedMDS.html for 
@@ -87,7 +91,8 @@
 
 
 focusedMDS <- function(distances, ids = NULL, colors = NULL, focus_point = ids[1],
-	                   size = NULL, circles = 7, tol = 0.001, check_matrix = FALSE )  {
+	                   size = NULL, circles = 7, tol = 0.001, check_matrix = FALSE,
+					   subsampling = TRUE )  {
   
   # Run through some if statements to check the input data
   graph <- TRUE
@@ -182,7 +187,8 @@ focusedMDS <- function(distances, ids = NULL, colors = NULL, focus_point = ids[1
   # create a list that contains the data to feed to JSON
   data = list(
     distances = distances, ids = ids, colors = colors, tol = tol, 
-	focus_point = focus_point, graph = graph, circles = circles
+	focus_point = focus_point, graph = graph, circles = circles,
+	subsampling = subsampling
   )
   
   # create widget
