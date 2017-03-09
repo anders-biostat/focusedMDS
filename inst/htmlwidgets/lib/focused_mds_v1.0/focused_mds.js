@@ -1,6 +1,6 @@
 // This function is written to be used with the focused_mds R htmlWidget
 
-function focused_mds(distances, ids, focus_point, tol) {
+function focused_mds(distances, ids, focus_point, tol, subsampling) {
     // Initializing variables and defining functions
     function sqr(x) { return x*x};  // Saves a lot of runtime vs Math.pow
 	var cos = Math.cos;
@@ -44,24 +44,40 @@ function focused_mds(distances, ids, focus_point, tol) {
 		//position of the new point, given the candidate phi
 		var xnew = result[ids_ordered[new_point]].r * cos(phi);
 		var ynew = result[ids_ordered[new_point]].r * sin(phi);
-	
-		for(j=0; j < new_point; j++ ) {
-			//position of the point we are comparing to new point
-			var xj = result[ids_ordered[j]].x;
-			var yj = result[ids_ordered[j]].y;
-		
-			//index of column names of matrix, in ORIGINAL order
-			var dij_col = ids.indexOf(ids_ordered[new_point]);
-			var dij_row = ids.indexOf(ids_ordered[j]);
-		
-			// actual distance given by dis matrix
-			var dij = distances[dij_col][dij_row];
+	    
+		if(ids_ordered.length > 300 & subsampling == true){
+			// For each point after the 100th point, subsample 
+			// a fixed n of points to optimize to for each new plotted point
+			var n = 150
 			
-			// calculated distance, given where we placed the point
-			var Dij = Math.sqrt( sqr((xnew - xj)) + sqr((ynew - yj)) );
+			
+			
+			
+			
+			
+			
+			
+			
+			
+		} else {
+			for(j=0; j < new_point; j++ ) {
+				//position of the point we are comparing to new point
+				var xj = result[ids_ordered[j]].x;
+				var yj = result[ids_ordered[j]].y;
 		
-			var stress = stress + sqr( (dij - Dij));
-		};
+				//index of column names of matrix, in ORIGINAL order
+				var dij_col = ids.indexOf(ids_ordered[new_point]);
+				var dij_row = ids.indexOf(ids_ordered[j]);
+		
+				// actual distance given by dis matrix
+				var dij = distances[dij_col][dij_row];
+			
+				// calculated distance, given where we placed the point
+				var Dij = Math.sqrt( sqr((xnew - xj)) + sqr((ynew - yj)) );
+		
+				var stress = stress + sqr( (dij - Dij));
+			};
+		}
 		return stress;
 	};
 	
