@@ -11,3 +11,7 @@ dependencies:
       version: 4.2.7
       src: htmlwidgets/lib/D3_v4.2.7
       script: d3.js
+    - name: underscore
+      version: 1.8.3
+      src: htmlwidgets/lib/underscore_v1.8.3
+      script: underscore.js
