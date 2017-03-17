@@ -81,17 +81,15 @@ function focused_mds(distances, ids, focus_point, tol, subsampling) {
 			
 			// For each point after the 100th point, subsample 
 			// a fixed n of points to optimize to for each new plotted point
-			var npoints = 50
+			var npoints = 100
 		
 			// Randomly choose n points from the ids_ordered list of names from which to subsample to
 			var sample_ids = _.sample(ids, npoints) 
 
 			} else { 
 			var	sample_ids = ids;
-			result[ids_ordered[new_point]].phi = optimize_js(0, Math.PI*2, function(phi){return stress(phi,sample_ids)}, tol);
 			}
-		}
-		
+		result[ids_ordered[new_point]].phi = optimize_js(0, Math.PI*2, function(phi){return stress(phi,sample_ids)}, tol);
 		result[ids_ordered[new_point]].x = result[ids_ordered[new_point]].r * cos(result[ids_ordered[new_point]].phi);
 		result[ids_ordered[new_point]].y = result[ids_ordered[new_point]].r * sin(result[ids_ordered[new_point]].phi);
 	};
