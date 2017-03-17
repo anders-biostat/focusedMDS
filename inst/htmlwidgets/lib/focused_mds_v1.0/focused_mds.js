@@ -65,36 +65,6 @@ function focused_mds(distances, ids, focus_point, tol, subsampling) {
 		return stress;
 	};
 	
-// Define stress function with subsampling
-	// This function is similar to the above function, but only optimizes 
-	// against a subset of previously plotted points
-	
-	function stress_sub(phi) {
-		var stress = 0
-		//position of the new point, given the candidate phi
-		var xnew = result[ids_ordered[new_point]].r * cos(phi);
-		var ynew = result[ids_ordered[new_point]].r * sin(phi);
-		
-		for(j=0; j < subsample_ids.length; j++) {
-			// position of the point we are comparing to new point
-			var xj = result[subsample_ids[j]].x;
-			var yj = result[subsample_ids[j]].y;
-
-			//index of column names of matrix, in ORIGINAL order
-			var dij_col = ids.indexOf(ids_ordered[new_point]);
-			var dij_row = ids.indexOf(subsample_ids[j]);
-			
-			// actual distance given by dis matrix
-			var dij = distances[dij_col][dij_row];
-		
-			// calculated distance, given where we placed the point
-			var Dij = Math.sqrt( sqr((xnew - xj)) + sqr((ynew - yj)) );
-	
-			var stress = stress + sqr( (dij - Dij));
-		};
-		return stress;
-	};
-	
 	// setting phi, xy coords, and colors for first two points
 	result[ids_ordered[0]].phi = 0;
 	result[ids_ordered[0]].x = 0;
@@ -115,12 +85,7 @@ function focused_mds(distances, ids, focus_point, tol, subsampling) {
 		
 			// Randomly choose n points from the ids_ordered list of names from which to subsample to
 			var sample_ids = _.sample(ids, npoints) 
-			// var subids_ordered = [];
-	// 		for (i in ids_dists){
-	// 			if( i %in% subsample_ids){ //FIXME This definitely does not work in javascript
-	// 				subids_ordered.push(ids_dists[i][0]);
-	// 			}
-	// 		};
+
 			} else { 
 			var	sample_ids = ids;
 			result[ids_ordered[new_point]].phi = optimize_js(0, Math.PI*2, function(phi){return stress(phi,sample_ids)}, tol);
