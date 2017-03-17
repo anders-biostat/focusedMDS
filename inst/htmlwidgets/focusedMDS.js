@@ -216,7 +216,9 @@ HTMLWidgets.widget({
 			           .attr("fill", function(d,i) { return color_object[d]})
 			 		   .attr("stroke", function(d,i) { if(Object.keys(result).indexOf(d) == 0) { return "red"}})  
 			 		   .on( "dblclick", function(d,i) {
-			 			   // save phis from previous result for arc transition
+			 			   var t0 = performance.now();
+						   
+						   // save phis from previous result for arc transition
 			 			   old_result = {};
 			 			   for(var i=0; i< Object.keys(result).length; i++){
 			 				   old_result[Object.keys(result)[i]] = {
@@ -263,7 +265,11 @@ HTMLWidgets.widget({
 			 					   return function(t) { return scale( rTween(t) * sin( phiTween(t) ) )}
 			 				   })
 			 				   .text( function (d) {return d })
-	   
+	   						
+							var t1 = performance.now()
+							
+							console.log("Updating time took " + ((t1 - t0)/1000) + "seconds")
+							
 			 		 	 })
 	 
 			 			 .on("mouseover", function(d){

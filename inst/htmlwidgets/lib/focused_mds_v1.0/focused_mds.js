@@ -39,7 +39,7 @@ function focused_mds(distances, ids, focus_point, tol, subsampling) {
 	// This function, to be optimized on, needs only one input (phi)
 	// It finds new_point from the for loop environment defined below
 	
-	function stress(phi) {
+	function stress(phi, sample_ids) {
 		var stress = 0;
 		//position of the new point, given the candidate phi
 		var xnew = result[ids_ordered[new_point]].r * cos(phi);
@@ -75,23 +75,15 @@ function focused_mds(distances, ids, focus_point, tol, subsampling) {
 		var xnew = result[ids_ordered[new_point]].r * cos(phi);
 		var ynew = result[ids_ordered[new_point]].r * sin(phi);
 		
-		// For each point after the 100th point, subsample 
-		// a fixed n of points to optimize to for each new plotted point
-		var npoints = 100
-		
-		// Randomly choose n points from the ids_ordered list of names from which to subsample to
-		var subsample_ids //FIXME find out how to actually randomly sample from an array. Probably tricky.
-		// ^this should be an array of length npoints populated by id names from ids_ordered.
-			
 		for(j=0; j < subsample_ids.length; j++) {
 			// position of the point we are comparing to new point
 			var xj = result[subsample_ids[j]].x;
 			var yj = result[subsample_ids[j]].y;
-			
+
 			//index of column names of matrix, in ORIGINAL order
-			var dij_col = ids.indexOf(subsample_ids[new_point]);
+			var dij_col = ids.indexOf(ids_ordered[new_point]);
 			var dij_row = ids.indexOf(subsample_ids[j]);
-	
+			
 			// actual distance given by dis matrix
 			var dij = distances[dij_col][dij_row];
 		
@@ -112,21 +104,31 @@ function focused_mds(distances, ids, focus_point, tol, subsampling) {
 	result[ids_ordered[1]].x = result[ids_ordered[1]].r * cos(result[ids_ordered[1]].phi);
 	result[ids_ordered[1]].y = result[ids_ordered[1]].r * sin(result[ids_ordered[1]].phi);
 	
-	if(ids_ordered.length > 100 & subsampling == true){
-	
-	
 	// use univariate optimization to calculate the rest
 	for(var new_point = 2; new_point < ids_ordered.length; new_point++) {
 		
-		if( ids.length > 100 & subsampling == TRUE & new_point > 100){ //FIXME check if if statement with three logical things will work
-			result[ids_ordered[new_point]].phi = optimize_js(0, Math.PI*2, stress_sub, tol);
-		} else {
-			result[ids_ordered[new_point]].phi = optimize_js(0, Math.PI*2, stress, tol);
+		if( ids.length > 100 & subsampling == true & new_point > 100){ 
+			
+			// For each point after the 100th point, subsample 
+			// a fixed n of points to optimize to for each new plotted point
+			var npoints = 50
+		
+			// Randomly choose n points from the ids_ordered list of names from which to subsample to
+			var sample_ids = _.sample(ids, npoints) 
+			// var subids_ordered = [];
+	// 		for (i in ids_dists){
+	// 			if( i %in% subsample_ids){ //FIXME This definitely does not work in javascript
+	// 				subids_ordered.push(ids_dists[i][0]);
+	// 			}
+	// 		};
+			} else { 
+			var	sample_ids = ids;
+			result[ids_ordered[new_point]].phi = optimize_js(0, Math.PI*2, function(phi){return stress(phi,sample_ids)}, tol);
+			}
 		}
 		
 		result[ids_ordered[new_point]].x = result[ids_ordered[new_point]].r * cos(result[ids_ordered[new_point]].phi);
 		result[ids_ordered[new_point]].y = result[ids_ordered[new_point]].r * sin(result[ids_ordered[new_point]].phi);
 	};
-	
 	return result;
 };
