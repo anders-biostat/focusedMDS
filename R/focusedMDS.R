@@ -92,7 +92,7 @@
 
 focusedMDS <- function(distances, ids = NULL, colors = NULL, focus_point = ids[1],
 	                   size = NULL, circles = 7, tol = 0.001, check_matrix = FALSE,
-					   subsampling = TRUE )  {
+					   subsampling = FALSE )  {
   
   # Run through some if statements to check the input data
   graph <- TRUE

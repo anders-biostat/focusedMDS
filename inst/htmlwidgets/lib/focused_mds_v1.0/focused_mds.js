@@ -7,6 +7,15 @@ function focused_mds(distances, ids, focus_point, tol, subsampling) {
 	var sin = Math.sin;
 	var abs = Math.abs;
 	
+	// Create distances object from distance matrix, indexed by ids
+	var dist_obj = {}
+	for( i = 0; i < distances.length; i++ ) {
+		dist_obj[ids[i]] = {}
+	   for( j = 0; j < distances[i].length; j++ ) {
+	      dist_obj[ids[i]][ids[j]] = distances[i][j]
+	   }
+	}
+	
 	// call distances for focus_point
 	var focus_dists = distances[ids.indexOf(focus_point)];
 	
@@ -49,19 +58,16 @@ function focused_mds(distances, ids, focus_point, tol, subsampling) {
 			//position of the point we are comparing to new point
 			var xj = result[ids_ordered[j]].x;
 			var yj = result[ids_ordered[j]].y;
-	
-			//index of column names of matrix, in ORIGINAL order
-			var dij_col = ids.indexOf(ids_ordered[new_point]);
-			var dij_row = ids.indexOf(ids_ordered[j]);
-	
-			// actual distance given by dis matrix
-			var dij = distances[dij_col][dij_row];
+			
+			// actual distance given in dist_obj
+			var dij = dist_obj[ids_ordered[new_point]][sample_ids[j]]
 		
 			// calculated distance, given where we placed the point
 			var Dij = Math.sqrt( sqr((xnew - xj)) + sqr((ynew - yj)) );
 	
 			var stress = stress + sqr( (dij - Dij));
 		};
+		
 		return stress;
 	};
 	
@@ -73,25 +79,25 @@ function focused_mds(distances, ids, focus_point, tol, subsampling) {
 	result[ids_ordered[1]].phi = 3*Math.PI/2;
 	result[ids_ordered[1]].x = result[ids_ordered[1]].r * cos(result[ids_ordered[1]].phi);
 	result[ids_ordered[1]].y = result[ids_ordered[1]].r * sin(result[ids_ordered[1]].phi);
-	
+		
 	// use univariate optimization to calculate the rest
 	for(var new_point = 2; new_point < ids_ordered.length; new_point++) {
-		
-		if( ids.length > 100 & subsampling == true & new_point > 100){ 
 			
-			// For each point after the 100th point, subsample 
-			// a fixed n of points to optimize to for each new plotted point
-			var npoints = 100
-		
-			// Randomly choose n points from the ids_ordered list of names from which to subsample to
-			var sample_ids = _.sample(ids, npoints) 
+		if( ids.length > 100 & subsampling == true & new_point > 100){ 
+		// For each point after the 100th point, subsample 
+		// a fixed n of points to optimize to for each new plotted point
+		var npoints = 100
+	
+		// Randomly choose n points from the ids_ordered list of names from which to subsample to
+		var sample_ids = _.sample(ids, npoints)
+		} else { 
+		var	sample_ids = ids_ordered;
+		}
 
-			} else { 
-			var	sample_ids = ids;
-			}
-		result[ids_ordered[new_point]].phi = optimize_js(0, Math.PI*2, function(phi){return stress(phi,sample_ids)}, tol);
-		result[ids_ordered[new_point]].x = result[ids_ordered[new_point]].r * cos(result[ids_ordered[new_point]].phi);
-		result[ids_ordered[new_point]].y = result[ids_ordered[new_point]].r * sin(result[ids_ordered[new_point]].phi);
+	result[ids_ordered[new_point]].phi = optimize_js(0, Math.PI*2, function(phi){return stress(phi, sample_ids)}, tol);
+	result[ids_ordered[new_point]].x = result[ids_ordered[new_point]].r * cos(result[ids_ordered[new_point]].phi);
+	result[ids_ordered[new_point]].y = result[ids_ordered[new_point]].r * sin(result[ids_ordered[new_point]].phi);
+	
 	};
 	return result;
 };

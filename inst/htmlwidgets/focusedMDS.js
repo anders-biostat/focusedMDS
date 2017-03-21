@@ -8,6 +8,19 @@ HTMLWidgets.widget({
 	  var cos = Math.cos
 	  var sin = Math.sin
 	  
+	  if( Math.sign === undefined ) { 
+	    Math.sign = function(x) { 
+	      if( x > 0 ) { 
+	        return 1; 
+	      } else if ( x < 0 ) { 
+	        return -1; 
+	      } else if( x == 0 ) { 
+	        return 0; 
+	      } else 
+	         throw "Error"; 
+	    } 
+	  }
+	  
 	  // Find the bigger, height or width, and set to size, to maintain aspect ratio
 	  var size = width < height ? width : height
 	  
@@ -19,7 +32,7 @@ HTMLWidgets.widget({
 	  var focus_point = "__none__";
 	  var sliderPosition = null;
 	  var circles = [];
-
+	  
     return {
 
 	  renderValue: function(data) {
@@ -230,7 +243,7 @@ HTMLWidgets.widget({
 			 			   // update result object by rerunning focused_mds
 			 			   result = focused_mds(data.distances, data.ids, d, data.tol)
 						   focus_point = d
-	    				   console.log("old_result, result, focus_point:", old_result, result, focus_point)
+	    				   
 			 			   // update all circles
 			 			   g.selectAll("circle")
 			 			       .data(data.ids)
