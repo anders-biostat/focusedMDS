@@ -27,7 +27,8 @@
 #'   Must be a character vector.
 #' @param colors A vector with length equal to the
 #'   number of rows of the matrix given in \code{distances}.
-#'   Must be CSS colors, or they will display as black.
+#'   Content of the vector can be either numeric, factor, or 
+#'   character. Values will be assigned to color categories.
 #' @param focus_point The initial ID to be plotted at the
 #'   center of the focusedMDS graph (default is the first 
 #'   element in the \code{ids} vector). Must be an element of
@@ -46,6 +47,10 @@
 #'   100 points, each point iteratively plotted after the 100th point will 
 #'   be optimized to a subsample of the previously plotted data points.
 #'   Recommended for plotting data sets with more than 300 points.
+#' @param color_palette Optional specification of a color palette to use
+#'   when \{colors} parameter is given. Must be a vector of CSS colors, 
+#'   with length at least as long as the number of unique variables in
+#'   \{colors}.
 #' 
 #' @examples
 #' # See http://lea-urpa.github.io/focusedMDS.html for 
@@ -90,7 +95,7 @@
 
 focusedMDS <- function(distances, ids = NULL, colors = NULL, focus_point = ids[1],
 	                   size = NULL, circles = 7, tol = 0.001, check_matrix = FALSE,
-					   subsampling = FALSE )  {
+					   subsampling = FALSE, color_palette = NULL )  {
   
   # Run through some if statements to check the input data
   graph <- TRUE
@@ -146,6 +151,9 @@ focusedMDS <- function(distances, ids = NULL, colors = NULL, focus_point = ids[1
 	  }
 	  if( class(ids) != "character"){
 		stop( "ids vector is not a character vector.")
+	  }
+	  if( length(unique(ids)) != length(ids)){
+		stop( "ids vector contains duplicate names. Please ensure all ids are unique")
 	  }
   }
   
