@@ -162,20 +162,50 @@ focusedMDS <- function(distances, ids = NULL, colors = NULL, focus_point = ids[1
 	  stop("Given focus_point is not an element in the ids vector.")
   }
   
+  # Check that color_palette is at least as long as the number of unique variables in colors
+  if(!is.null(color_palette)){
+	  if( length(color_palette) < length(unique(colors))){
+		  stop( "'color_palette' must be at least as long as the number of unique variables (categories) in the 'colors' vector")
+	  }
+  }
+  
   # If no colors specified, give rainbow colors.
   # If colors specified, check that the number of colors matches the number of points.
   if( is.null(colors) ) {
-	  colors <- rainbow(nrow(distances), v = .85)
-	  rgbcolors <- as.data.frame(t(col2rgb(colors)))
-	  rgbcolors <- paste(rgbcolors$red, rgbcolors$green, rgbcolors$blue, sep = ",")
-	  colors <- paste(rep("rgb(", length(rgbcolors)), rgbcolors, rep(")", length(rgbcolors)), sep= "")
+	  cat_colors <- rainbow(nrow(distances), v = .85)
 	  
 	  } else {
 		  if(nrow(distances) != length(colors) ) {
 		  	stop( "Number of rows/columns in 'distances' does not match length of 'colors' vector.")
-	  }
+	  	  }
+		  # Assign colors based on categories given in 'colors' vector
+		  categories <- unique(colors)
+		  cat_colors <- colors
+		  if(is.null(color_palette)){
+			  # Assign rainbow colors if none others given
+		  	  uniqueColors <- rainbow(length(unique(colors))) 
+		  
+			  for(i in seq_along(categories)){
+				  cat_colors <- gsub(categories[i], uniqueColors[i], cat_colors, fixed = T)
+			  }
+		  } else {
+			  # Use color_palette if given
+			  color_palette <- color_palette[1:length(unique(colors))]
+		      
+		  	  for(i in seq_along(categories)){
+			  	  cat_colors <- gsub(categories[i], color_palette[i], cat_colors, fixed = T)
+		  	  }
+		  } 
   }
   
+  if(is.null(color_palette)){
+	  # Convert to cat_colors to rgb colors
+	  rgbcolors <- as.data.frame(t(col2rgb(cat_colors)))
+	  rgbcolors <- paste(rgbcolors$red, rgbcolors$green, rgbcolors$blue, sep = ",")
+	  cat_colors <- paste(rep("rgb(", length(rgbcolors)), rgbcolors, rep(")", length(rgbcolors)), sep= "")
+  }
+  
+    
   # Check that that tolerance level is given as a number
   if( !is.numeric(tol)) {
 	  stop("'tol' must be numeric ")
@@ -192,7 +222,7 @@ focusedMDS <- function(distances, ids = NULL, colors = NULL, focus_point = ids[1
   
   # create a list that contains the data to feed to JSON
   data = list(
-    distances = distances, ids = ids, colors = colors, tol = tol, 
+    distances = distances, ids = ids, colors = cat_colors, tol = tol, 
 	focus_point = focus_point, graph = graph, circles = circles,
 	subsampling = subsampling
   )
