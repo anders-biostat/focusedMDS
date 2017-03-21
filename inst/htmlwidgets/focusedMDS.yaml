@@ -15,3 +15,7 @@ dependencies:
       version: 1.8.3
       src: htmlwidgets/lib/underscore_v1.8.3
       script: underscore.js
+    - name: console.save
+      version: 1.0
+      src: htmlwidgets/lib/console_save
+      script: console-save.js
