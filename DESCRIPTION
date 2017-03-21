@@ -1,8 +1,7 @@
 Package: focusedMDS
 Title: Focused, Interactive Multidimensional Scaling
 Version: 1.1.3
-Authors@R: c(person("Lea", "Urpa", email = "lea.urpa@helsinki.fi", role = c("aut", "cre")), person("Simon", "Anders", email = "simon.anders@helsinki.fi", role = "aut"))
-Maintainer: Lea Urpa <lea.urpa@helsinki.fi>
+Authors@R: c(person("Lea", "Urpa", email = "lea.urpa@helsinki.fi", role = "cre"), person("Simon", "Anders", email = "simon.anders@helsinki.fi", role = "aut"))
 Description: focusedMDS takes a distance matrix and plots it as an 
     interactive graph. Double click on any point to choose a new focus
     point, and hover over points to see their ID labels. In this graph,
