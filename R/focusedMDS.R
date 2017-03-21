@@ -14,8 +14,6 @@
 #' \url{https://lea-urpa.github.io/focusedMDS.html}.
 #'
 #' @import htmlwidgets
-#' @import htmltools
-#' @import yaml
 #' @importFrom "grDevices" "rainbow"
 #' @importFrom "grDevices" "col2rgb"
 #'

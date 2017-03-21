@@ -5,7 +5,8 @@
 \title{Focused, interactive multidimensional scaling}
 \usage{
 focusedMDS(distances, ids = NULL, colors = NULL, focus_point = ids[1],
-  size = NULL, circles = 7, tol = 0.001, check_matrix = FALSE)
+  size = NULL, circles = 7, tol = 0.001, check_matrix = FALSE,
+  subsampling = FALSE)
 }
 \arguments{
 \item{distances}{A square, symmetric distance matrix or 
@@ -32,11 +33,16 @@ pixels. Disables dynamic sizing.}
 \item{tol}{The tolerance for the optimization method choosing
 the location of the non-focus points. Default 0.001.}
 
-\item{check_matrix}{Turns on additional checks of the matrix,
+\item{check_matrix}{Logical value permitting additional checks of the matrix,
 ensuring that the given matrix fulfills the
 triangle inequality. Slows down the initial graph plotting, 
 but useful if you are not sure if your matrix is a distance
 matrix or has been calculated correctly.}
+
+\item{subsampling}{Logical value stating that for samples of over
+100 points, each point iteratively plotted after the 100th point will 
+be optimized to a subsample of the previously plotted data points.
+Recommended for plotting data sets with more than 300 points.}
 }
 \description{
 \code{focusedMDS} takes a distance matrix and plots
