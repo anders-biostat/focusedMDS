@@ -4,9 +4,9 @@
 \alias{focusedMDS}
 \title{Focused, interactive multidimensional scaling}
 \usage{
-focusedMDS(distances, ids = NULL, colors = NULL, focus_point = ids[1],
+focusedMDS(distances, ids = NULL, color_cat = NULL, focus_point = ids[1],
   size = NULL, circles = 7, tol = 0.001, check_matrix = FALSE,
-  subsampling = FALSE)
+  subsampling = FALSE, color_palette = NULL)
 }
 \arguments{
 \item{distances}{A square, symmetric distance matrix or 
@@ -16,9 +16,10 @@ focusedMDS(distances, ids = NULL, colors = NULL, focus_point = ids[1],
 number of rows of the matrix given in \code{distances}.
 Must be a character vector.}
 
-\item{colors}{A vector with length equal to the
+\item{color_cat}{A vector with length equal to the
 number of rows of the matrix given in \code{distances}.
-Must be CSS colors, or they will display as black.}
+Content of the vector can be either numeric, factor, or 
+character. Values will be assigned to color categories.}
 
 \item{focus_point}{The initial ID to be plotted at the
 center of the focusedMDS graph (default is the first 
@@ -43,6 +44,11 @@ matrix or has been calculated correctly.}
 100 points, each point iteratively plotted after the 100th point will 
 be optimized to a subsample of the previously plotted data points.
 Recommended for plotting data sets with more than 300 points.}
+
+\item{color_palette}{Optional specification of a color palette to use
+when \code{colors} parameter is given. Must be a vector of CSS colors, 
+with length at least as long as the number of unique variables in
+\code{colors}.}
 }
 \description{
 \code{focusedMDS} takes a distance matrix and plots
@@ -80,12 +86,10 @@ focusedMDS(dists)
 # Create labels based on flower species
 colorvector <- as.vector(iris$Species)
 
-colorvector[colorvector == "setosa"] <- "firebrick"
-colorvector[colorvector == "versicolor"] <- "cornflowerblue"
-colorvector[colorvector == "virginica"] <- "gold"
+colors <- c("firebrick", "cornflowerblue", "gold")
 
 # Visualization with color labels
-focusedMDS(dists, colors = colorvector )
+focusedMDS(dists, color_cat = colorvector, color_palette = colors )
 
 # Create text labels
 table(iris$Species)
@@ -93,7 +97,7 @@ names <- c(paste(rep("setosa", 50), 1:50, sep=""),
            paste(rep("versicolor", 50), 1:50, sep=""),
            paste(rep("virginica", 50), 1:50, sep=""))
 
-focusedMDS(dists, ids = names, colors = colorvector)
+focusedMDS(dists, ids = names, color_cat = colorvector, color_palette = colors)
 
 
 
