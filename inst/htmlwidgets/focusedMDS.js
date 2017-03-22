@@ -22,7 +22,7 @@ HTMLWidgets.widget({
 	  }
 	  
 	  // Find the bigger, height or width, and set to size, to maintain aspect ratio
-	  var size = width < height ? width : height
+	  var size = width < height ? width : height // FIXME figure out how to keep aspect ratio with button sidebar
 	  
 	  // Initialize objects
 	  var old_result = {};
@@ -32,10 +32,12 @@ HTMLWidgets.widget({
 	  var focus_point = "__none__";
 	  var sliderPosition = null;
 	  var circles = [];
+	  var buttonswidth = 140
 	  
     return {
 
 	  renderValue: function(data) {
+		  	 var legendboxsize = 20
 		  
 			 focus_point = data.focus_point
 		     circles = data.circles
@@ -67,13 +69,20 @@ HTMLWidgets.widget({
 		 	 var gridlines_rs = [];
 		 	 for(var i=1; i != circles; i++) { gridlines_rs.push((i/Math.round((circles - 2) / 2 )) * size / 2) }	  
 			 
-			 // Create svg and append to a div
-					  
+			 // Create html structure
+			
+			 // Create main div in el		  
 			 var chart_container = d3.select(el)
 				 .append('div')
 			     .attr('id', 'chart_container')
+			 
+			 var chart_tr = chart_container.append('tr')
+			 
+			 // Create focusedMDS plot td
+			 var mainchart = chart_tr.append('td')
+			 	 .attr('id', 'mainchart')
 		  
-			 var chart = chart_container.append('svg:svg')
+			 var chart = mainchart.append('svg:svg')
   			 	 	 .attr('width', size )
 			 	 	 .attr('height', size )
 			 	 	 .attr('class', 'chart')
@@ -84,41 +93,21 @@ HTMLWidgets.widget({
 			 	     .attr('height', size)
 			 	     .attr('class', 'main');
 			 
-			 // Create div for sidebar stuff and append to el
+			 // Create buttons sidebar td
 			 
-			 var chart_inset = d3.select(el)
-			      .append('div')
-			      .style('position', 'absolute')
-			      .style('top', '0')
-			      .style('left', '0')
-				     .attr('id', 'chart_inset')
-			         .attr('height', 61)
-			         .attr('width', 140)
+			 var chart_inset = chart_tr.append('td')
+					 .attr('id', 'chart_inset')
+					 .style('vertical-align', 'top')
+					 .style('text-align', 'center')
+					 	.append('table')
+					 	.attr('width', buttonswidth + 'px')
 			 
-			 var chart_background = chart_inset.append('svg')
-			      .style('position', 'relative')
-			      .style('z-index', 1)
-			      .style('top', '0')
-			      .style('left', '0')
-			         .attr('height', 61)
-			         .attr('width', 140)
+			 var labelcheck = chart_inset.append('tr').append('td')
 			 
-			 chart_background.append('rect')
-			      .attr('fill', 'white')
-			      .attr('height', 61)
-			      .attr('width', 140)
-			 
-			 var button_div = chart_inset.append('div')
-			      .style('text-align', 'left')
-			      .style('position', 'absolute')
-			      .style('z-index', 2)
-			      .style('top', 0)
-			      .style('left', 0)
-			 
-			 var button = button_div.append('input')
-				     .attr('type', 'checkbox')
-			         .property('checked', false)
-			 
+			 var button = labelcheck.append('input')
+					 .attr('type', 'checkbox')
+					 .property('checked', false)
+			
 			 chart_inset.select('input').on('change', function(d){ 
 				 if (button.property('checked') == true) { 
 					 g.selectAll('text')
@@ -129,30 +118,24 @@ HTMLWidgets.widget({
 			 	 }
 			 })
 			 
-			 var text = button_div.append('text')
-			     .text(' Show all labels')
-			     .style('font-family', 'Georgia, serif')
-			     .style('font-size', '12px')
+			 var buttontext = labelcheck.append('text')
+			 		 .text(' Show all labels')
+			   	  	 .style('font-family', 'Georgia, serif')
+			    	 .style('font-size', '12px')
 			 
+			 var slider_text = chart_inset.append('tr').append('td')
+			 		 .append('text')
+			 		 .text('Circle size:')
+			 		 .style('width', buttonswidth + "px")
+			  	     .style('font-family', 'Georgia, serif')
+			    	 .style('font-size', '12px')
 			 
-			 var slider_div = chart_inset.append('div')
-			     .style('text-align', 'center')
-			      .style('position', 'absolute')
-			      .style('z-index', 2)
-			      .style('top', '20px')
-			      .style('left', 0)
+			 var sliderContainer = chart_inset.append('tr').append('td')
+			 		 .append('svg')
+			   	  	 .attr('height',20)
+					 .attr('width', 140)
 			 
-			 slider_div.append('text')
-			     .text('Circle size:')
-			     .style('font-family', 'Georgia, serif')
-			     .style('font-size', '12px')
-			 
-			 
-			 var sliderContainer = slider_div.append('svg')
-			     .attr('height',20)
-			     .attr('width', 140)
-			 
-			 var slider = sliderContainer.append('g')
+			  var slider = sliderContainer.append('g')
 			     .attr('class', 'slider')
 			     .attr('width', 150)
 			 
@@ -205,6 +188,43 @@ HTMLWidgets.widget({
 				 
 				 sliderPosition = input;
 			 }	 
+			 
+			 var spacer = chart_inset.append('tr').append('td')
+						.append('svg')
+				 		.attr('width', buttonswidth)
+				 		.attr('height', '10px')
+				 			.append('rect')
+				 			.attr('width', buttonswidth)
+				 	   		.attr('height', '10px')
+				 			.attr('fill', 'white')
+			 
+			 var colorlegend = chart_inset.append('tr').append('td')
+			 		.append('svg')
+				 	.attr('width', buttonswidth)
+			 		.attr('height', (legendboxsize * data.legend_data.categories.length))
+			 			
+			 // Create color legend rectangles
+			 
+			 colorlegend.selectAll('rect')
+			 		.data(data.legend_data.colors)
+			 		.enter().append('rect')
+			 			.attr('class', 'legend')
+			 			.attr('height', legendboxsize)
+			 			.attr('width', legendboxsize)
+			 			.attr('x', 10)
+			 			.attr('y', function(d,i) { return (i * legendboxsize); })
+						.attr('fill', function(d,i) { return d; })
+
+			 // Create color legend text
+			 colorlegend.selectAll('text')
+			 		.data(data.legend_data.categories)
+			 		.enter().append('text')
+			 			.attr('class', 'legend')
+			 			.attr('x', (legendboxsize + 15))
+			 			.attr('y', function(d,i) { return (i * legendboxsize) + 15; })
+			 			.text( function(d,i) { return d; })
+			  	   	  	.style('font-family', 'Georgia, serif')
+			    		.style('font-size', '12px')
 			 
 			 // Create background bars
 			 g.selectAll("ellipse")
