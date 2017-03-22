@@ -21,9 +21,6 @@ HTMLWidgets.widget({
 	    } 
 	  }
 	  
-	  // Find the bigger, height or width, and set to size, to maintain aspect ratio
-	  var size = width < height ? width : height // FIXME figure out how to keep aspect ratio with button sidebar
-	  
 	  // Initialize objects
 	  var old_result = {};
 	  var result = {};
@@ -33,6 +30,9 @@ HTMLWidgets.widget({
 	  var sliderPosition = null;
 	  var circles = [];
 	  var buttonswidth = 140
+	  
+	  // Find the bigger, height or width, and set to size, to maintain aspect ratio
+	  var size = (width - buttonswidth) < height ? (width - buttonswidth) : height // FIXME figure out how to keep aspect ratio with button sidebar
 	  
     return {
 
@@ -338,7 +338,7 @@ HTMLWidgets.widget({
 
       resize: function(width, height) {
 		  
-		  size = width < height ? width : height;
+		  size = (width - buttonswidth) < height ? (width - buttonswidth) : height;
 		  
 		  var gridlines_rs = [];
 		  for(var i=1; i != circles; i++) { gridlines_rs.push((i/Math.round((circles - 2) / 2 )) * size / 2) };
