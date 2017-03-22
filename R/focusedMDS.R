@@ -179,7 +179,7 @@ focusedMDS <- function(distances, ids = NULL, color_cat = NULL, focus_point = id
 	  colors <- rainbow(nrow(distances), v = .70)
 	  
 	  # If no colors vector given, set legend_data value to false
-	  legend_data = list( categories = c(), colors = c())
+	  legend_data = list( categories = rep("__nolegend__", 3), colors = rep("__nolegend__", 3))
 	  
 	  } else {
 		  # If colors specified, check that the number of colors matches the number of points.

@@ -226,6 +226,12 @@ HTMLWidgets.widget({
 			  	   	  	.style('font-family', 'Georgia, serif')
 			    		.style('font-size', '12px')
 			 
+			 // If no legend given, hide it
+			 if( data.legend_data.categories[0] == "__nolegend__"){
+			 	d3.selectAll(".legend")
+				 	.style('visibility', 'hidden')
+			 }
+			 
 			 // Create background bars
 			 g.selectAll("ellipse")
 			     .data(gridlines_rs)
