@@ -176,7 +176,7 @@ focusedMDS <- function(distances, ids = NULL, color_cat = NULL, focus_point = id
   
   # If no colors specified, give rainbow colors.
   if( is.null(color_cat) ) {
-	  colors <- rainbow(nrow(distances), v = .70)
+	  colors <- rainbow(nrow(distances), v = .85)
 	  
 	  # If no colors vector given, set legend_data value to false
 	  legend_data = list( categories = rep("__nolegend__", 3), colors = rep("__nolegend__", 3))
@@ -192,7 +192,7 @@ focusedMDS <- function(distances, ids = NULL, color_cat = NULL, focus_point = id
 
 		  if(is.null(color_palette)){
 			  # Assign rainbow colors if none others given
-		  	  uniqueColors <- rainbow(length(unique(colors)), v = .70) 
+		  	  uniqueColors <- rainbow(length(unique(colors)), v = .85) 
 		  } else {
 			  # Use color_palette if given
 			  uniqueColors <- color_palette[1:length(unique(colors))]
