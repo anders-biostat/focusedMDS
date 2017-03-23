@@ -187,8 +187,8 @@ focusedMDS <- function(distances, ids = NULL, color_cat = NULL, focus_point = id
 		  	stop( "Number of rows/columns in 'distances' does not match length of 'color_cat' vector.")
 	  	  }
 		  # Assign colors based on categories given in 'colors' vector
-		  categories <- unique(color_cat)
-		  colors <- color_cat # copying color_cat vector
+		  categories <- as.character(unique(color_cat))
+		  colors <- as.character(color_cat) # copying color_cat vector
 
 		  if(is.null(color_palette)){
 			  # Assign rainbow colors if none others given
@@ -198,18 +198,17 @@ focusedMDS <- function(distances, ids = NULL, color_cat = NULL, focus_point = id
 			  uniqueColors <- color_palette[1:length(unique(colors))]
 		  }
 		  
-		  for(i in seq_along(categories)){
-			  colors <- gsub(categories[i], uniqueColors[i], colors, fixed = T)
+		  for(i in 1:length(uniqueColors)){
+			  colors[colors == categories[i]]  <- uniqueColors[i]
 		  }
 		  # Convert uniqueColors to RBG
 		  uniqueColors <- toRGBvector(uniqueColors)
-		  
 		  legend_data <- list( categories = categories, colors = uniqueColors )	   
   }
   
   # Convert colors to rgb colors
-  colors <- toRGBvector(colors)
-    
+  colors <- toRGBvector(colors) 
+  
   # Check that that tolerance level is given as a number
   if( !is.numeric(tol)) {
 	  stop("'tol' must be numeric ")
