@@ -308,7 +308,7 @@ HTMLWidgets.widget({
 			 var infotext = chart_inset.append('tr').append('td')
 			 		.append('text')
 			 		.attr('id', 'infotext')
-			 		.text('double click legend to exit')
+			 		.text('Double click legend to exit')
 			  	    .style('font-family', 'Georgia, serif')
 			    	.style('font-size', '12px')
 			 		.style('opacity', 0.7)
