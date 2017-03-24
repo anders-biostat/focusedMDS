@@ -6,7 +6,7 @@
 \usage{
 focusedMDS(distances, ids = NULL, color_cat = NULL, focus_point = ids[1],
   size = NULL, circles = 7, tol = 0.001, check_matrix = FALSE,
-  subsampling = FALSE, color_palette = NULL)
+  subsampling = FALSE, color_palette = NULL, title = NULL)
 }
 \arguments{
 \item{distances}{A square, symmetric distance matrix or 
@@ -49,6 +49,8 @@ Recommended for plotting data sets with more than 300 points.}
 when \code{colors} parameter is given. Must be a vector of CSS colors, 
 with length at least as long as the number of unique variables in
 \code{colors}.}
+
+\item{title}{Optional title for plot, must be a single character string.}
 }
 \description{
 \code{focusedMDS} takes a distance matrix and plots

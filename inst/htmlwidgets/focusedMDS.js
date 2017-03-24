@@ -32,13 +32,19 @@ HTMLWidgets.widget({
 	  var buttonswidth = 140
 	  
 	  // Find the bigger, height or width, and set to size, to maintain aspect ratio
-	  var size = (width - buttonswidth) < height ? (width - buttonswidth) : height // FIXME figure out how to keep aspect ratio with button sidebar
+	  var size = (width - buttonswidth) < height ? (width - buttonswidth) : height 
 	  
     return {
 
 	  renderValue: function(data) {
 		  	 var legendboxsize = 20
-		  
+		  	 
+		  	 if(data.ids.length < 1000){
+		  	 	var opacityval = 0.1
+		  	 } else {
+		  	 	var opacityval = 0.01
+		  	 }
+			 
 			 focus_point = data.focus_point
 		     circles = data.circles
 			 
@@ -46,6 +52,11 @@ HTMLWidgets.widget({
 	 	  	 for(var i=0; i < data.colors.length; i++) {
 	 	  	 	 color_object[data.ids[i]] = data.colors[i]
 	 	  	 };
+			 
+			 var color_categories = {};
+			 for (var i=0; i < data.legend_data.categoryvector.length; i++) {
+			 	color_categories[data.ids[i]] = data.legend_data.categoryvector[i]
+			 }
 			 
 		     result = focused_mds(data.distances, data.ids, focus_point, data.tol, data.subsampling)
 			 
@@ -102,6 +113,17 @@ HTMLWidgets.widget({
 					 	.append('table')
 					 	.attr('width', buttonswidth + 'px')
 			 
+			 // If title given, create title tr
+			 if( data.title != "__notitle__") {
+			 	var title_tr = chart_inset.append('tr').append('td')
+				 		.append('text')
+				 		.text(data.title)
+			   	  	    .style('font-family', 'Georgia, serif')
+			    		.style('font-size', '12px')
+				 		.style('font-weight', 'bold')
+			 }		 
+			
+			 // Create label checkbox and legend 
 			 var labelcheck = chart_inset.append('tr').append('td')
 			 
 			 var button = labelcheck.append('input')
@@ -123,6 +145,7 @@ HTMLWidgets.widget({
 			   	  	 .style('font-family', 'Georgia, serif')
 			    	 .style('font-size', '12px')
 			 
+			 // Create slider and label
 			 var slider_text = chart_inset.append('tr').append('td')
 			 		 .append('text')
 			 		 .text('Circle size:')
@@ -187,8 +210,9 @@ HTMLWidgets.widget({
 				     .attr('r', 0.2 * size/20 * input/65 );
 				 
 				 sliderPosition = input;
-			 }	 
-			 
+			 }
+			 	 
+			 // Create spacer
 			 var spacer = chart_inset.append('tr').append('td')
 						.append('svg')
 				 		.attr('width', buttonswidth)
@@ -214,7 +238,18 @@ HTMLWidgets.widget({
 			 			.attr('x', 10)
 			 			.attr('y', function(d,i) { return (i * legendboxsize); })
 						.attr('fill', function(d,i) { return d; })
-
+			 			.on('mouseover', function(d,i) {
+			 				d3.selectAll(".data_points")
+								.style('opacity', opacityval)
+							
+							d3.selectAll(".X" + data.legend_data.categories[i])
+								.style('opacity', 1)
+			 			})
+						.on('mouseout', function(d) {
+							d3.selectAll('.data_points')
+								.style('opacity', 1)
+						})
+			 	
 			 // Create color legend text
 			 colorlegend.selectAll('text')
 			 		.data(data.legend_data.categories)
@@ -248,7 +283,7 @@ HTMLWidgets.widget({
 			 g.selectAll("circle")
 			     .data(data.ids)
 			     .enter().append("circle")
-					   .attr("class", "data_points")
+					   .attr("class", function(d,i) { return "data_points " + "X"+color_categories[d]; })
 			 		   .attr("cx", function(d,i) { return scale(result[d]['x']); })
 			 		   .attr("cy", function(d,i) { return scale(result[d]['y']); })
 			 		   .attr("r", 0.2 * size/20)
@@ -285,7 +320,7 @@ HTMLWidgets.widget({
 			 					   var rTween = d3.scaleLinear().range( [old_result[d].r, result[d].r] )
 			 					   return function(t) { return scale( rTween(t) * sin( phiTween(t) ) )}
 			 				   })
-			 				   .attr("fill", function(d,i) { return color_object[d]})
+			 				   .attr("fill", function(d,i) { return color_object[d]; })
 			 			   	   .attr("stroke", function(d,i) { if(Object.keys(result).indexOf(d) == 0) { return "red"}})
 	   
 			 			   // update text locations

@@ -51,6 +51,11 @@
 #'   100 points, each point iteratively plotted after the 100th point will 
 #'   be optimized to a subsample of the previously plotted data points.
 #'   Recommended for plotting data sets with more than 300 points.
+#' @param title Optional title for plot, must be a single character string.
+#'
+#'
+#'
+#'
 #' 
 #' @examples
 #' # See http://lea-urpa.github.io/focusedMDS.html for 
@@ -93,7 +98,7 @@
 
 focusedMDS <- function(distances, ids = NULL, color_cat = NULL, focus_point = ids[1],
 	                   size = NULL, circles = 7, tol = 0.001, check_matrix = FALSE,
-					   subsampling = FALSE, color_palette = NULL )  {
+					   subsampling = FALSE, color_palette = NULL, title = NULL )  {
   
   # Define function that converts hex/named colors to rgb
   toRGBvector <- function(colorsvector) {
@@ -179,7 +184,7 @@ focusedMDS <- function(distances, ids = NULL, color_cat = NULL, focus_point = id
 	  colors <- rainbow(nrow(distances), v = .85)
 	  
 	  # If no colors vector given, set legend_data value to false
-	  legend_data = list( categories = rep("__nolegend__", 3), colors = rep("__nolegend__", 3))
+	  legend_data = list( categories = rep("__nolegend__", 3), colors = rep("__nolegend__", 3), categoryvector = rep("__nolegend__", 3))
 	  
 	  } else {
 		  # If colors specified, check that the number of colors matches the number of points.
@@ -203,7 +208,7 @@ focusedMDS <- function(distances, ids = NULL, color_cat = NULL, focus_point = id
 		  }
 		  # Convert uniqueColors to RBG
 		  uniqueColors <- toRGBvector(uniqueColors)
-		  legend_data <- list( categories = categories, colors = uniqueColors )	   
+		  legend_data <- list( categories = categories, colors = uniqueColors, categoryvector = as.character(color_cat) )	   
   }
   
   # Convert colors to rgb colors
@@ -221,13 +226,22 @@ focusedMDS <- function(distances, ids = NULL, color_cat = NULL, focus_point = id
 	  }
   }
   
+  # Check that 'title' is a character
+  if( !is.null(title)) {
+	  if( !is.character(title)) {
+		  stop("'title' must be a single character string")
+	  }
+  } else {
+	  title <- "__notitle__"
+  }
+  
   circles <- circles * 2 
   
   # create a list that contains the data to feed to JSON
   data = list(
     distances = distances, ids = ids, colors = colors, tol = tol, 
 	focus_point = focus_point, graph = graph, circles = circles,
-	subsampling = subsampling, legend_data = legend_data
+	subsampling = subsampling, legend_data = legend_data, title = title
   )
   
   # create widget
