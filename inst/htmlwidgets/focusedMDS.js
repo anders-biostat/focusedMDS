@@ -70,7 +70,7 @@ HTMLWidgets.widget({
 					 }
 				 }
 			 };
-		  
+		     console.log(maxDistance)
 			 // Create scaling factors
 			 scale = d3.scaleLinear()
 			          .domain([-1*maxDistance, maxDistance])
@@ -234,7 +234,6 @@ HTMLWidgets.widget({
 			 for( var i=0; i < data.legend_data.colors.length; i++) {
 			 	clickvector.push(0)
 			 }
-			 console.log('clickvector init', clickvector)
 			 colorlegend.selectAll('rect')
 			 		.data(data.legend_data.colors)
 			 		.enter().append('rect')
@@ -263,12 +262,10 @@ HTMLWidgets.widget({
 								d3.selectAll(".X" + data.legend_data.categories[i])
 								   .style('opacity', 1)	
 								clickvector[i] = 1
-								console.log("clickvector after click", clickvector)
 							} else if(clickvector[i] == 1) {
 								d3.selectAll(".X" + data.legend_data.categories[i])
 								   .style('opacity', opacityval)	
 								clickvector[i] = 0
-								console.log("clickvector after second click", clickvector)
 							}
 							d3.select('#infotext')
 								.style('visibility', 'visible')
@@ -288,7 +285,6 @@ HTMLWidgets.widget({
 			   			 	for( var i=0; i < data.legend_data.colors.length; i++) {
 			   			 		clickvector.push(0)
 			   			 	}
-							console.log('clickvector after double click', clickvector)
 						})
 			 	
 			 // Create color legend text
