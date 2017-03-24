@@ -228,7 +228,13 @@ HTMLWidgets.widget({
 			 		.attr('height', (legendboxsize * data.legend_data.categories.length))
 			 			
 			 // Create color legend rectangles
-			 
+			 var dblclickpath = 0
+			 var clickpath = 0
+			 var clickvector = [];
+			 for( var i=0; i < data.legend_data.colors.length; i++) {
+			 	clickvector.push(0)
+			 }
+			 console.log('clickvector init', clickvector)
 			 colorlegend.selectAll('rect')
 			 		.data(data.legend_data.colors)
 			 		.enter().append('rect')
@@ -239,15 +245,50 @@ HTMLWidgets.widget({
 			 			.attr('y', function(d,i) { return (i * legendboxsize); })
 						.attr('fill', function(d,i) { return d; })
 			 			.on('mouseover', function(d,i) {
-			 				d3.selectAll(".data_points")
-								.style('opacity', opacityval)
-							
-							d3.selectAll(".X" + data.legend_data.categories[i])
-								.style('opacity', 1)
+			 				if(clickpath == 0) {
+								d3.selectAll(".data_points")
+									.style('opacity', opacityval)
+								d3.selectAll(".X" + data.legend_data.categories[i])
+									.style('opacity', 1)
+			 				}
 			 			})
 						.on('mouseout', function(d) {
+							if(clickpath == 0) {
+								d3.selectAll('.data_points')
+									.style('opacity', 1)
+							} 
+						})
+						.on('click', function(d,i) {
+							if(clickvector[i] == 0 ) {
+								d3.selectAll(".X" + data.legend_data.categories[i])
+								   .style('opacity', 1)	
+								clickvector[i] = 1
+								console.log("clickvector after click", clickvector)
+							} else if(clickvector[i] == 1) {
+								d3.selectAll(".X" + data.legend_data.categories[i])
+								   .style('opacity', opacityval)	
+								clickvector[i] = 0
+								console.log("clickvector after second click", clickvector)
+							}
+							d3.select('#infotext')
+								.style('visibility', 'visible')
+							d3.select('#infotext2')
+								.style('visibility', 'hidden')
+							clickpath = 1
+						})
+						.on('dblclick', function() {
 							d3.selectAll('.data_points')
 								.style('opacity', 1)
+							d3.select('#infotext')
+								.style('visibility', 'hidden')
+							d3.select('#infotext2')
+								.style('visibility', 'visible')
+							clickpath = 0
+							clickvector = [];
+			   			 	for( var i=0; i < data.legend_data.colors.length; i++) {
+			   			 		clickvector.push(0)
+			   			 	}
+							console.log('clickvector after double click', clickvector)
 						})
 			 	
 			 // Create color legend text
@@ -266,6 +307,26 @@ HTMLWidgets.widget({
 			 	d3.selectAll(".legend")
 				 	.style('visibility', 'hidden')
 			 }
+			 
+			 // Create infotext for exiting legend color stuff
+			 var infotext = chart_inset.append('tr').append('td')
+			 		.append('text')
+			 		.attr('id', 'infotext')
+			 		.text('double click legend to exit')
+			  	    .style('font-family', 'Georgia, serif')
+			    	.style('font-size', '12px')
+			 		.style('opacity', 0.7)
+			 		.style('visibility', 'hidden')
+			 
+			 // Create infotext2 for general info
+			 var infotext2 = chart_inset.append('tr').append('td')
+			 		.append('text')
+			 		.attr('id', 'infotext2')
+			 		.text('Double click dot to re-focus plot. Click legend color block to highlight those data.')
+			  	    .style('font-family', 'Georgia, serif')
+			    	.style('font-size', '12px')
+			 		.style('opacity', 0.7)
+			 		.style('visibility', 'visible')
 			 
 			 // Create background bars
 			 g.selectAll("ellipse")
