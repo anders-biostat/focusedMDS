@@ -126,9 +126,13 @@ focusedMDS <- function(distances, ids = NULL, color_cat = NULL, focus_point = id
 	stop( "'distances' must be a square matrix or 'dist' object.")
   
   # Check that the matrix is symmetric
-  
   if( is.element(FALSE, distances == t(distances)) ){
 	  stop("Matrix does not appear to be symmetric. Are you sure it's a distance matrix? Try submitting a dist object.")
+  }
+  
+  # Check that the matrix contains no negative values
+  if( any( distances < 0) == TRUE){
+	  stop("Matrix must contain only positive values.")
   }
   
   # Check that the matrix fulfills the triangle inequality.
@@ -194,6 +198,10 @@ focusedMDS <- function(distances, ids = NULL, color_cat = NULL, focus_point = id
 	  	  }
 		  # Assign colors based on categories given in 'colors' vector
 		  categories <- as.character(unique(color_cat))
+		  if( categories > 25 ){
+			  stop( "'color_cat' vector must be discrete values, not continuous values. Please provide fewer categories.")
+		  }
+		  
 		  colors <- as.character(color_cat) # copying color_cat vector
 
 		  if(is.null(color_palette)){
@@ -207,6 +215,7 @@ focusedMDS <- function(distances, ids = NULL, color_cat = NULL, focus_point = id
 		  for(i in 1:length(uniqueColors)){
 			  colors[colors == categories[i]]  <- uniqueColors[i]
 		  }
+		  
 		  # Convert uniqueColors to RBG
 		  uniqueColors <- toRGBvector(uniqueColors)
 		  legend_data <- list( categories = categories, colors = uniqueColors, categoryvector = as.character(color_cat) )	   
