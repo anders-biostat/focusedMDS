@@ -198,7 +198,7 @@ focusedMDS <- function(distances, ids = NULL, color_cat = NULL, focus_point = id
 	  	  }
 		  # Assign colors based on categories given in 'colors' vector
 		  categories <- as.character(unique(color_cat))
-		  if( categories > 25 ){
+		  if( length(categories) > 25 ){
 			  stop( "'color_cat' vector must be discrete values, not continuous values. Please provide fewer categories.")
 		  }
 		  
