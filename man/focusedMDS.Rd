@@ -18,7 +18,7 @@ Must be a character vector.}
 
 \item{color_cat}{A vector with length equal to the
 number of rows of the matrix given in \code{distances}.
-Content of the vector can be either numeric, factor, or 
+Content of the vector can be either integer, factor, or 
 character. Values will be assigned to color categories.}
 
 \item{focus_point}{The initial ID to be plotted at the
@@ -104,4 +104,3 @@ focusedMDS(dists, ids = names, color_cat = colorvector, color_palette = colors)
 
 
 }
-

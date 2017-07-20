@@ -27,7 +27,7 @@
 #'   Must be a character vector.
 #' @param color_cat A vector with length equal to the
 #'   number of rows of the matrix given in \code{distances}.
-#'   Content of the vector can be either numeric, factor, or 
+#'   Content of the vector can be either integer, factor, or 
 #'   character. Values will be assigned to color categories.
 #' @param focus_point The initial ID to be plotted at the
 #'   center of the focusedMDS graph (default is the first 
@@ -198,10 +198,6 @@ focusedMDS <- function(distances, ids = NULL, color_cat = NULL, focus_point = id
 	  	  }
 		  # Assign colors based on categories given in 'colors' vector
 		  categories <- as.character(unique(color_cat))
-		  if( length(categories) > 25 ){
-			  stop( "'color_cat' vector must be discrete values, not continuous values. Please provide fewer categories.")
-		  }
-		  
 		  colors <- as.character(color_cat) # copying color_cat vector
 
 		  if(is.null(color_palette)){
