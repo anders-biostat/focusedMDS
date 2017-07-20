@@ -70,7 +70,7 @@ HTMLWidgets.widget({
 					 }
 				 }
 			 };
-		     console.log(maxDistance)
+		     
 			 // Create scaling factors
 			 scale = d3.scaleLinear()
 			          .domain([-1*maxDistance, maxDistance])
