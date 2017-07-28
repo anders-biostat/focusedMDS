@@ -178,6 +178,7 @@ focusedMDS <- function(distances, ids = NULL, color_cat = NULL, focus_point = id
 	  
 	  # Automatically replace any problematic characters
 	  ids <- gsub("[.]", "-", ids)
+	  ids <- gsub(" ", "-", ids)
   }
   
   # Check that the specified focus_point is contained in the ids vector
