@@ -130,6 +130,11 @@ focusedMDS <- function(distances, ids = NULL, color_cat = NULL, focus_point = id
 	  stop("Matrix does not appear to be symmetric. Are you sure it's a distance matrix? Try submitting a dist object.")
   }
   
+  # Check that the matrix contains no NA values
+  if( any(is.na(distances)) == TRUE){
+	  stop("Matrix must not contain NA values.")
+  }
+  
   # Check that the matrix contains no negative values
   if( any( distances < 0) == TRUE){
 	  stop("Matrix must contain only positive values.")
